@@ -7,7 +7,8 @@ import { JsonSchemaFormService } from '../../library/json-schema-form.service';
   selector: 'material-input-widget',
   template: `
     <section [class]="options?.htmlClass">
-      <md-input #inputControl
+        <md-input-container>
+      <input mdInput #inputControl
         [attr.aria-describedby]="'control' + layoutNode?._id + 'Status'"
         [attr.list]="'control' + layoutNode?._id + 'Autocomplete'"
         [attr.maxlength]="options?.maxLength"
@@ -21,9 +22,10 @@ import { JsonSchemaFormService } from '../../library/json-schema-form.service';
         [placeholder]="options?.title"
         [readonly]="options?.readonly ? 'readonly' : null"
         [style.width]="'100%'"
-        [type]="layoutNode?.type"
+        [type]="layoutNode?.type != 'color' ? layoutNode?.type : 'text'" 
         [value]="controlValue"
-        (input)="updateValue($event)">
+        (input)="updateValue($event)"/>
+        </md-input-container>
         <span *ngIf="options?.fieldAddonLeft"
           md-prefix>{{options?.fieldAddonLeft}}</span>
         <span *ngIf="options?.fieldAddonRight"
@@ -32,25 +34,24 @@ import { JsonSchemaFormService } from '../../library/json-schema-form.service';
           align="end">{{options?.description}}</md-hint>
         <md-hint *ngIf="!options?.description && options?.placeholder && !formControl?.dirty"
           align="end">{{options?.placeholder}}</md-hint>
-      </md-input>
     </section>`,
-    styles: [`md-input { margin-top: 6px; }`],
+    styles: [`input { margin-top: 6px; }`],
 })
 export class MaterialInputComponent implements OnInit {
-  private formControl: AbstractControl;
-  private controlName: string;
-  private controlValue: any;
-  private controlDisabled: boolean = false;
-  private boundControl: boolean = false;
-  private options: any;
-  private autoCompleteList: string[] = [];
+  public formControl: AbstractControl;
+  public controlName: string;
+  public controlValue: any;
+  public controlDisabled: boolean = false;
+  public boundControl: boolean = false;
+  public options: any;
+  public autoCompleteList: string[] = [];
   @Input() formID: number;
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
   @Input() dataIndex: number[];
 
   constructor(
-    private jsf: JsonSchemaFormService
+    public jsf: JsonSchemaFormService
   ) { }
 
   ngOnInit() {
@@ -58,7 +59,7 @@ export class MaterialInputComponent implements OnInit {
     this.jsf.initializeControl(this);
   }
 
-  private updateValue(event) {
+  public updateValue(event) {
     this.jsf.updateValue(this, event.target.value);
   }
 }

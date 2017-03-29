@@ -82,7 +82,7 @@ import {
         aria-hidden="true"
         class="form-control-feedback glyphicon"></span>
       <div *ngIf="options?.messageLocation !== 'top'">
-        <p *ngIf="!options?.errorMessage"
+        <p *ngIf="options?.errorMessage"
           class="help-block"
           [innerHTML]="options?.errorMessage"></p>
         <p *ngIf="options?.feedback && formControl?.dirty"
@@ -98,7 +98,7 @@ import {
       </div>
     </div>
 
-    <div *ngIf="debug && debugOutput">debug: <pre>{{debugOutput}}</pre></div>
+    <div *ngIf="options?.debug && debugOutput">debug: <pre>{{debugOutput}}</pre></div>
   `,
   styles: [`
     :host /deep/ .list-group-item .form-control-feedback { top: 40; }
@@ -115,13 +115,13 @@ import {
   `],
 })
 export class Bootstrap3Component implements OnInit, OnChanges {
-  private controlInitialized: boolean = false;
-  private options: any; // Options used in this framework
-  private widgetLayoutNode: any; // layoutNode passed to child widget
-  private widgetOptions: any; // Options passed to child widget
-  private layoutPointer: string;
-  private formControl: any = null;
-  private debugOutput: any = '';
+   controlInitialized: boolean = false;
+   options: any; // Options used in this framework
+   widgetLayoutNode: any; // layoutNode passed to child widget
+   widgetOptions: any; // Options passed to child widget
+   layoutPointer: string;
+   formControl: any = null;
+   debugOutput: any = '';
   @Input() formID: number;
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
@@ -129,7 +129,7 @@ export class Bootstrap3Component implements OnInit, OnChanges {
 
   constructor(
     public changeDetector: ChangeDetectorRef,
-    private jsf: JsonSchemaFormService
+    public jsf: JsonSchemaFormService
   ) { }
 
   ngOnInit() {
@@ -268,15 +268,16 @@ export class Bootstrap3Component implements OnInit, OnChanges {
             this.options.feedback && value === 'INVALID' &&
             this.formControl.dirty && this.formControl.errors
           ) {
-            this.options.errorMessage = Object.keys(this.formControl.errors).map(
+          this.options.errorMessage = Object.keys(this.formControl.errors).map(
                 error => [error, Object.keys(this.formControl.errors[error]).map(
-                  errorParameter => errorParameter + ': ' +
+                  errorParameter  => errorParameter + ': ' +
                     this.formControl.errors[error][errorParameter]
                 ).join(', ')].filter(e => e).join(' - ')
               ).join('<br>');
           } else {
             this.options.errorMessage = null;
           }
+          console.log(this.options.errorMessage );
         });
 
         if (this.options.debug) {

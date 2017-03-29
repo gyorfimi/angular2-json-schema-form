@@ -62,21 +62,21 @@ import { buildFormGroup, buildTitleMap, JsonPointer } from '../library/utilities
     </div>`,
 })
 export class CheckboxesComponent implements OnInit {
-  private formControl: AbstractControl;
-  private controlName: string;
-  private controlValue: any;
-  private boundControl: boolean = false;
-  private options: any;
-  private layoutOrientation: string;
-  private formArray: AbstractControl;
-  private checkboxList: CheckboxItem[] = [];
+  public formControl: AbstractControl;
+  public controlName: string;
+  public controlValue: any;
+  public boundControl: boolean = false;
+  public options: any;
+  public layoutOrientation: string;
+  public formArray: AbstractControl;
+  public checkboxList: CheckboxItem[] = [];
   @Input() formID: number;
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
   @Input() dataIndex: number[];
 
   constructor(
-    private jsf: JsonSchemaFormService
+    public jsf: JsonSchemaFormService
   ) { }
 
   ngOnInit() {

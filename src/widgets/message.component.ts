@@ -13,15 +13,15 @@ import { JsonSchemaFormService } from '../library/json-schema-form.service';
       [innerHTML]="message"></span>`,
 })
 export class MessageComponent implements OnInit {
-  private options: any;
-  private message: string = null;
+  public options: any;
+  public message: string = null;
   @Input() formID: number;
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
   @Input() dataIndex: number[];
 
   constructor(
-    private jsf: JsonSchemaFormService
+    public jsf: JsonSchemaFormService
   ) { }
 
   ngOnInit() {

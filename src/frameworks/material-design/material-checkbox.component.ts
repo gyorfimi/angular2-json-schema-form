@@ -20,21 +20,21 @@ import { JsonSchemaFormService } from '../../library/json-schema-form.service';
     </md-checkbox>`,
 })
 export class MaterialCheckboxComponent implements OnInit {
-  private formControl: AbstractControl;
-  private controlName: string;
-  private controlValue: any;
-  private controlDisabled: boolean = false;
-  private boundControl: boolean = false;
-  private options: any;
-  private trueValue: any = true;
-  private falseValue: any = false;
+  public formControl: AbstractControl;
+  public controlName: string;
+  public controlValue: any;
+  public controlDisabled: boolean = false;
+  public boundControl: boolean = false;
+  public options: any;
+  public trueValue: any = true;
+  public falseValue: any = false;
   @Input() formID: number;
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
   @Input() dataIndex: number[];
 
   constructor(
-    private jsf: JsonSchemaFormService
+    public jsf: JsonSchemaFormService
   ) { }
 
   ngOnInit() {
@@ -45,7 +45,7 @@ export class MaterialCheckboxComponent implements OnInit {
     }
   }
 
-  private updateValue(event) {
+  public updateValue(event) {
     this.jsf.updateValue(this, event.checked ? this.trueValue : this.falseValue);
   }
 }

@@ -7,5 +7,5 @@ import { SemanticUIComponent } from './semantic-ui.component';
 
 export const ALL_FRAMEWORKS = [
   NoFrameworkComponent, Bootstrap3Component, Bootstrap4Component,
-  Foundation6Component, MaterialDesignComponent, SemanticUIComponent
+  Foundation6Component,  MaterialDesignComponent,  SemanticUIComponent
 ];

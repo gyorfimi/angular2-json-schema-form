@@ -28,8 +28,8 @@ import * as _ from 'lodash';
 @Injectable()
 export class WidgetLibraryService {
 
-  private defaultWidget: string = 'none';
-  private widgetLibrary: any = {
+  public defaultWidget: string = 'none';
+  public widgetLibrary: any = {
 
   // Angular 2 JSON Schema Form administrative widgets
     'none': NoneComponent, // Placeholder, for development - displays nothing
@@ -132,15 +132,15 @@ export class WidgetLibraryService {
     // 'wysihtml5': HTML editor - http://jhollingworth.github.io/bootstrap-wysihtml5
     // 'quill': Quill HTML / rich text editor (?) - https://quilljs.com
   };
-  private registeredWidgets: any = { };
-  private frameworkWidgets: any = { };
-  private activeWidgets: any = { };
+  public registeredWidgets: any = { };
+  public frameworkWidgets: any = { };
+  public activeWidgets: any = { };
 
   constructor() {
     this.setActiveWidgets();
   }
 
-  private setActiveWidgets() {
+  public setActiveWidgets() {
     this.activeWidgets = Object.assign(
       { }, this.widgetLibrary, this.frameworkWidgets, this.registeredWidgets
     );

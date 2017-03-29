@@ -18,22 +18,22 @@ import { toTitleCase } from '../../library/utilities/index';
   `
 })
 export class MaterialDesignComponent implements OnInit, OnChanges {
-  private controlInitialized: boolean = false;
-  private controlType: string;
-  private inputType: string;
-  private options: any; // Options used in this framework
-  private widgetLayoutNode: any; // layoutNode passed to child widget
-  private widgetOptions: any; // Options passed to child widget
-  private layoutPointer: string;
-  private formControl: any = null;
+  public controlInitialized: boolean = false;
+  public controlType: string;
+  public inputType: string;
+  public options: any; // Options used in this framework
+  public widgetLayoutNode: any; // layoutNode passed to child widget
+  public widgetOptions: any; // Options passed to child widget
+  public layoutPointer: string;
+  public formControl: any = null;
   @Input() formID: number;
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
   @Input() dataIndex: number[];
 
   constructor(
-    private changeDetector: ChangeDetectorRef,
-    private jsf: JsonSchemaFormService
+    public changeDetector: ChangeDetectorRef,
+    public jsf: JsonSchemaFormService
   ) { }
 
   ngOnInit() {
@@ -44,7 +44,7 @@ export class MaterialDesignComponent implements OnInit, OnChanges {
     if (!this.controlInitialized) this.initializeControl();
   }
 
-  private initializeControl() {
+  public initializeControl() {
     if (this.layoutNode) {
       this.options = _.cloneDeep(this.layoutNode.options);
       this.widgetLayoutNode = Object.assign(
@@ -130,7 +130,7 @@ export class MaterialDesignComponent implements OnInit, OnChanges {
     }
   }
 
-  private setTitle(): string {
+  public setTitle(): string {
     switch (this.layoutNode.type) {
       case 'array': case 'button': case 'checkbox': case 'conditional':
       case 'fieldset': case 'help': case 'msg': case 'message':

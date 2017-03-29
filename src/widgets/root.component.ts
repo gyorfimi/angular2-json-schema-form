@@ -29,7 +29,7 @@ import { Component, Input } from '@angular/core';
   `],
 })
 export class RootComponent {
-  private options: any;
+  public options: any;
   @Input() formID: number;
   @Input() dataIndex: number[];
   @Input() layoutIndex: number[];

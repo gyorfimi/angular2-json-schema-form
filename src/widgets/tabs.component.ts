@@ -33,17 +33,17 @@ import { JsonPointer } from '../library/utilities/index';
   styles: [`a { cursor: pointer; }`],
 })
 export class TabsComponent implements OnInit {
-  private options: any;
-  private itemCount: number;
-  private selectedItem: number = 0;
-  private showAddTab: boolean = true;
+  public options: any;
+  public itemCount: number;
+  public selectedItem: number = 0;
+  public showAddTab: boolean = true;
   @Input() formID: number;
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
   @Input() dataIndex: number[];
 
   constructor(
-    private jsf: JsonSchemaFormService
+    public jsf: JsonSchemaFormService
   ) { }
 
   ngOnInit() {
@@ -52,7 +52,7 @@ export class TabsComponent implements OnInit {
     this.updateControl();
   }
 
-  private select(index) {
+  public select(index) {
     if (this.layoutNode.items[index].type === '$ref') {
       this.itemCount = this.layoutNode.items.length;
       this.jsf.addItem({
@@ -66,7 +66,7 @@ export class TabsComponent implements OnInit {
     this.selectedItem = index;
   }
 
-  private updateControl() {
+  public updateControl() {
     const lastItem = this.layoutNode.items[this.layoutNode.items.length - 1];
     if (lastItem.type === '$ref' &&
       this.itemCount >= (lastItem.options.maxItems || 1000000)
@@ -75,7 +75,7 @@ export class TabsComponent implements OnInit {
     }
   }
 
-  private setTitle(item: any = null, index: number = null): string {
+  public setTitle(item: any = null, index: number = null): string {
     return this.jsf.setTitle(this, item, index);
   }
 }

@@ -6,7 +6,8 @@ import { JsonSchemaFormService } from '../../library/json-schema-form.service';
 @Component({
   selector: 'material-textarea-widget',
   template: `
-    <md-textarea #inputControl
+    <md-input-container>
+    <textarea mdInput #inputControl
       [attr.aria-describedby]="'control' + layoutNode?._id + 'Status'"
       [attr.list]="'control' + layoutNode?._id + 'Autocomplete'"
       [attr.maxlength]="options?.maxLength"
@@ -21,7 +22,8 @@ import { JsonSchemaFormService } from '../../library/json-schema-form.service';
       [readonly]="options?.readonly ? 'readonly' : null"
       [style.width]="'100%'"
       [value]="controlValue"
-      (input)="updateValue($event)">
+              (input)="updateValue($event)" ></textarea>
+    </md-input-container>
       <span *ngIf="options?.fieldAddonLeft"
         md-prefix>{{options?.fieldAddonLeft}}</span>
       <span *ngIf="options?.fieldAddonRight"
@@ -30,22 +32,22 @@ import { JsonSchemaFormService } from '../../library/json-schema-form.service';
         align="end">{{options?.description}}</md-hint>
       <md-hint *ngIf="options?.placeholder && !formControl?.dirty"
         align="end">{{options?.placeholder}}</md-hint>
-    </md-textarea>`,
+  `,
 })
 export class MaterialTextareaComponent implements OnInit {
-  private formControl: AbstractControl;
-  private controlName: string;
-  private controlValue: any;
-  private controlDisabled: boolean = false;
-  private boundControl: boolean = false;
-  private options: any;
+  public formControl: AbstractControl;
+  public controlName: string;
+  public controlValue: any;
+  public controlDisabled: boolean = false;
+  public boundControl: boolean = false;
+  public options: any;
   @Input() formID: number;
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
   @Input() dataIndex: number[];
 
   constructor(
-    private jsf: JsonSchemaFormService,
+    public jsf: JsonSchemaFormService,
   ) { }
 
   ngOnInit() {
@@ -53,7 +55,7 @@ export class MaterialTextareaComponent implements OnInit {
     this.jsf.initializeControl(this);
   }
 
-  private updateValue(event) {
+  public updateValue(event) {
     this.jsf.updateValue(this, event.target.value);
   }
 }

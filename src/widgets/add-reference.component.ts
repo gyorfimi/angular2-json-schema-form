@@ -15,18 +15,18 @@ import { JsonSchemaFormService } from '../library/json-schema-form.service';
     </button>`,
 })
 export class AddReferenceComponent implements OnInit, DoCheck {
-  private options: any;
-  private itemCount: number;
-  private showAddButton: boolean = true;
-  private previousLayoutIndex: number[];
-  private previousDataIndex: number[];
+  public options: any;
+  public itemCount: number;
+  public showAddButton: boolean = true;
+  public previousLayoutIndex: number[];
+  public previousDataIndex: number[];
   @Input() formID: number;
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
   @Input() dataIndex: number[];
 
   constructor(
-    private jsf: JsonSchemaFormService
+    public jsf: JsonSchemaFormService
   ) { }
 
   ngOnInit() {
@@ -42,14 +42,14 @@ export class AddReferenceComponent implements OnInit, DoCheck {
     }
   }
 
-  private addItem(event) {
+  public addItem(event) {
     event.preventDefault();
     this.itemCount = this.layoutIndex[this.layoutIndex.length - 1] + 1;
     this.jsf.addItem(this);
     this.updateControl();
   }
 
-  private updateControl() {
+  public updateControl() {
     this.itemCount = this.layoutIndex[this.layoutIndex.length - 1];
     this.previousLayoutIndex = this.layoutIndex;
     this.previousDataIndex = this.dataIndex;
@@ -57,7 +57,7 @@ export class AddReferenceComponent implements OnInit, DoCheck {
       this.itemCount < (this.options.maxItems || 1000000);
   }
 
-  private setTitle(): string {
+  public setTitle(): string {
     const parent: any = {
       dataIndex: this.dataIndex.slice(0, -1),
       layoutNode: this.jsf.getParentNode(this)

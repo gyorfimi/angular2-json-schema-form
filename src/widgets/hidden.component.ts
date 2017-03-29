@@ -10,22 +10,22 @@ import { JsonSchemaFormService } from '../library/json-schema-form.service';
       [disabled]="controlDisabled"
       [name]="controlName"
       [id]="'control' + layoutNode?._id"
-      [type]="hidden"
+      [type]="'hidden'"
       [value]="controlValue">`,
 })
 export class HiddenComponent implements OnInit {
-  private formControl: AbstractControl;
-  private controlName: string;
-  private controlValue: any;
-  private controlDisabled: boolean = false;
-  private boundControl: boolean = false;
+  public formControl: AbstractControl;
+  public controlName: string;
+  public controlValue: any;
+  public controlDisabled: boolean = false;
+  public boundControl: boolean = false;
   @Input() formID: number;
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
   @Input() dataIndex: number[];
 
   constructor(
-    private jsf: JsonSchemaFormService
+    public jsf: JsonSchemaFormService
   ) { }
 
   ngOnInit() {

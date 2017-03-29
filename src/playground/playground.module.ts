@@ -12,11 +12,12 @@ import { PlaygroundComponent } from './playground.component';
 import { PlaygroundContainerComponent } from './playground-container.component';
 import { AceEditorDirective } from './ace-editor.directive';
 import { routing, appRoutingProviders } from './playground.routing';
+import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 
 @NgModule({
   imports: [
-    BrowserModule, HttpModule, routing,
-    MaterialModule.forRoot(), JsonSchemaFormModule.forRoot()
+    BrowserModule, HttpModule, routing, BrowserAnimationsModule,
+    MaterialModule, JsonSchemaFormModule.forRoot()
   ],
   declarations: [
     PlaygroundContainerComponent, PlaygroundComponent, AceEditorDirective

@@ -22,19 +22,19 @@ import { JsonSchemaFormService } from '../library/json-schema-form.service';
     </div>`,
 })
 export class SubmitComponent implements OnInit {
-  private formControl: AbstractControl;
-  private controlName: string;
-  private controlValue: any;
-  private controlDisabled: boolean = false;
-  private boundControl: boolean = false;
-  private options: any;
+  public formControl: AbstractControl;
+  public controlName: string;
+  public controlValue: any;
+  public controlDisabled: boolean = false;
+  public boundControl: boolean = false;
+  public options: any;
   @Input() formID: number;
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
   @Input() dataIndex: number[];
 
   constructor(
-    private jsf: JsonSchemaFormService
+    public jsf: JsonSchemaFormService
   ) { }
 
   ngOnInit() {
@@ -45,7 +45,7 @@ export class SubmitComponent implements OnInit {
     }
   }
 
-  private updateValue(event) {
+  public updateValue(event) {
     if (typeof this.options.onClick === 'function') {
       this.options.onClick(event);
     } else {
