@@ -277,7 +277,6 @@ export class Bootstrap3Component implements OnInit, OnChanges {
           } else {
             this.options.errorMessage = null;
           }
-          console.log(this.options.errorMessage );
         });
 
         if (this.options.debug) {
