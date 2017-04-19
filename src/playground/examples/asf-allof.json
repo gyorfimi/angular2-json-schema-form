@@ -1,0 +1,49 @@
+{
+  "schema": {
+    "type": "object",
+    "properties": {
+      "as": {
+        "type": "string"
+      },
+      "vegyes": {
+        "$ref": "#/definitions/vegyes"
+      }
+    },
+    "definitions": {
+      "vegyes": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/v-1"
+          },
+          {
+            "$ref": "#/definitions/v-2"
+          }
+        ]
+      },
+      "v-1": {
+        "type": "object",
+        "properties": {
+          "zip": {
+            "title": "Irányítószám",
+            "type": "number"
+          },
+          "city": {
+            "title": "Város",
+            "type": "string"
+          }
+        },
+        "required": ["city"]
+      },
+      "v-2": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "title": "Utca",
+            "type": "string"
+          }
+        },
+        "required": ["street"]
+      }
+    }
+  }
+}

@@ -222,8 +222,14 @@ export function getSchemaReference(
       hasOwn(newSchema, 'allOf') && isArray(newSchema.allOf)
     ) {
       newSchema = newSchema.allOf
-        .map(object => getSchemaReference(schema, object, schemaRefLibrary, recursiveRefMap))
-        .reduce((schema1, schema2) => Object.assign(schema1, schema2), { });
+        .map(object => getSchemaReference(schema, object.$ref, schemaRefLibrary, recursiveRefMap))
+        .reduce((schema1, schema2) => _.mergeWith(schema1, schema2,
+            (objValue, srcValue) => {
+                if (_.isArray(objValue) && _.isArray(srcValue)) {
+                  return objValue.concat(srcValue);
+                }
+        }), {});
+        console.log(newSchema);
     }
 
     if (schemaRefLibrary) {
