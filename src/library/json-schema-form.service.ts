@@ -8,9 +8,10 @@ import * as _ from 'lodash';
 import {
   buildFormGroup, buildFormGroupTemplate, buildLayout, buildSchemaFromData,
   buildSchemaFromLayout, convertJsonSchema3to4, fixJsonFormOptions,
-  formatFormData, getControl, getSchemaReference, hasOwn, hasValue, isArray,
+  formatFormData, getControl, hasOwn, hasValue, isArray,
   isDefined, isObject, isString, JsonPointer, parseText
 } from './utilities/index';
+import {processSchemaReferences} from "./utilities/json-schema.functions";
 
 export type CheckboxItem = { name: string, value: any, checked?: boolean };
 
@@ -43,9 +44,7 @@ export class JsonSchemaFormService {
   public arrayMap: Map<string, number> = new Map<string, number>(); // Maps arrays in data object and number of tuple values
   public dataMap: Map<string, any> = new Map<string, any>(); // Maps paths in data model to schema and formGroup paths
   public dataRecursiveRefMap: Map<string, string> = new Map<string, string>(); // Maps recursive reference points in data model
-  public schemaRecursiveRefMap: Map<string, string> = new Map<string, string>(); // Maps recursive reference points in schema
   public layoutRefLibrary: any = {}; // Library of layout nodes for adding to form
-  public schemaRefLibrary: any = {}; // Library of schemas for resolving schema $refs
   public templateRefLibrary: any = {}; // Library of formGroup templates for adding to form
 
   // Default global form options
@@ -104,9 +103,7 @@ export class JsonSchemaFormService {
     this.arrayMap = new Map<string, number>();
     this.dataMap = new Map<string, any>();
     this.dataRecursiveRefMap = new Map<string, string>();
-    this.schemaRecursiveRefMap = new Map<string, string>();
     this.layoutRefLibrary = {};
-    this.schemaRefLibrary = {};
     this.templateRefLibrary = {};
     this.globalOptions = _.cloneDeep(this.globalOptionDefaults);
   }
@@ -186,95 +183,14 @@ export class JsonSchemaFormService {
     }
   }
 
-  // Resolve all schema $ref links
-  public resolveSchemaRefLinks() {
-
-    // Search schema for $ref links
-    JsonPointer.forEachDeep(this.schema, (value, pointer) => {
-      if (hasOwn(value, '$ref') && isString(value['$ref'])) {
-        const newReference: string = JsonPointer.compile(value['$ref']);
-        const isRecursive: boolean = JsonPointer.isSubPointer(newReference, pointer);
-
-        // Save new target schemas in schemaRefLibrary
-        if (hasValue(newReference) && !hasOwn(this.schemaRefLibrary, newReference)) {
-          this.schemaRefLibrary[newReference] = getSchemaReference(
-            this.schema, newReference, this.schemaRefLibrary
-          );
-        }
-
-        // Save link in schemaRecursiveRefMap
-        if (!this.schemaRecursiveRefMap.has(pointer)) {
-          this.schemaRecursiveRefMap.set(pointer, newReference);
-        }
-
-        // If a $ref link is not recursive,
-        // remove link and replace with copy of target schema
-        if (!isRecursive) {
-          delete value['$ref'];
-          const targetSchema: any = Object.assign(
-            _.cloneDeep(this.schemaRefLibrary[newReference]), value
-          );
-          this.schema = JsonPointer.set(this.schema, pointer, targetSchema);
-
-          // Save partial link in schemaRecursiveRefMap,
-          // so it can be matched later if it is recursive
-          this.schemaRecursiveRefMap.set(newReference, pointer);
-        } else {
-
-          // If a matching partial link exists, complete it
-          const mappedReference: string = this.schemaRecursiveRefMap.get(newReference);
-          if (this.schemaRecursiveRefMap.has(newReference) &&
-            JsonPointer.isSubPointer(mappedReference, newReference)
-          ) {
-            this.schemaRecursiveRefMap.set(newReference, mappedReference);
-          }
-        }
-      }
-    }, true);
-
-    // Add redirects for links to shared schemas (such as definitions)
-    let addRedirects: Map<string, string> = new Map<string, string>();
-    this.schemaRecursiveRefMap.forEach((toRef1, fromRef1) =>
-      this.schemaRecursiveRefMap.forEach((toRef2, fromRef2) => {
-        if (fromRef1 !== fromRef2 && fromRef1 !== toRef2 &&
-          JsonPointer.isSubPointer(toRef2, fromRef1)
-        ) {
-          const newRef: string = fromRef2 + fromRef1.slice(toRef2.length);
-          if (!this.schemaRecursiveRefMap.has(newRef)) {
-            addRedirects.set(newRef, toRef1);
-          }
-        }
-      })
-    );
-    addRedirects.forEach((toRef, fromRef) => this.schemaRecursiveRefMap.set(fromRef, toRef));
-
-    // Fix recursive references pointing to shared schemas
-    this.schemaRecursiveRefMap.forEach((toRef1, fromRef1) =>
-      this.schemaRecursiveRefMap.forEach((toRef2, fromRef2) => {
-        if (fromRef1 !== fromRef2 && toRef1 === toRef2 &&
-          JsonPointer.isSubPointer(fromRef1, fromRef2)
-        ) {
-          this.schemaRecursiveRefMap.set(fromRef2, fromRef1);
-        }
-      })
-    );
-
-    // Remove unmatched (non-recursive) partial links
-    this.schemaRecursiveRefMap.forEach((toRef, fromRef) => {
-      if (!JsonPointer.isSubPointer(toRef, fromRef) &&
-        !hasOwn(this.schemaRefLibrary, toRef)
-      ) {
-        this.schemaRecursiveRefMap.delete(fromRef);
-      }
-    });
-
-    // // TODO: Create dataRecursiveRefMap from schemaRecursiveRefMap
-    // this.schemaRecursiveRefMap.forEach((toRef, fromRef) => {
-    //   this.dataRecursiveRefMap.set(
-    //     JsonPointer.toDataPointer(fromRef, this.schema),
-    //     JsonPointer.toDataPointer(toRef, this.schema)
-    //   );
-    // });
+  /**
+   * Simplifies schema:
+   *  - removes as much $ref as possible
+   *  - transforms allOf to merge of properties
+   *
+   */
+  public simplifySchema() {
+    this.schema = processSchemaReferences(this.schema);
   }
 
   public buildSchemaFromData(data?: any, requireAllFields: boolean = false): any {

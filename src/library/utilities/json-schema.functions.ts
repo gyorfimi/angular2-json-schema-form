@@ -16,8 +16,6 @@ import { JsonValidators } from './json.validators';
  *
  * getFromSchema:
  *
- * getSchemaReference:
- *
  * getInputType:
  *
  * isInputRequired:
@@ -166,6 +164,169 @@ export function getFromSchema(
   return subSchema;
 }
 
+function _arraymerger(base, addendum) {
+  return _.mergeWith(base, addendum,
+    (objValue, srcValue) => {
+      if (_.isArray(objValue) && _.isArray(srcValue)) {
+        return objValue.concat(srcValue);
+      }
+    });
+}
+
+/**
+ * Simplifies schema:
+ *  - removes as much $ref as possible
+ *  - transforms allOf to merge of properties
+ *
+ */
+export function processSchemaReferences(schema: any) {
+
+  class RefInfo {
+    refSchema: any;
+    isRecursive = false;
+    isExtended = false;
+    referred = new Set<string>();
+
+    constructor(public id: string, public base: any, public pointer, public isOuterSchema = false) {
+      this.refSchema = JsonPointer.get(base, pointer);
+    }
+  }
+
+  const refInfos = new Map<String, RefInfo>();
+  const referrers = new Map<String, RefInfo>();
+
+  const schemaProcessor = (base: any, schema: any, uri: string) => {
+
+    JsonPointer.forEachDeep(schema, (value, pointer) => {
+      if (hasOwn(value, '$ref') && isString(value['$ref'])) {
+        const referredPointer = JsonPointer.compile(value['$ref']);
+        const theReference = uri + '/' + referredPointer;
+        if (!refInfos.has(theReference)) {
+          // TODO: load if required, and process it as well
+          const refInfo = new RefInfo(theReference, base, referredPointer);
+          refInfos.set(theReference, refInfo);
+        }
+        const refInfo = refInfos.get(theReference);
+        const referrer = uri + '/' + pointer;
+        referrers.set(referrer, value);
+        refInfo.referred.add(referrer);
+      }
+    });
+
+    let extendRefs = (ref: RefInfo, underExtension: Set<string>) => {
+      if (ref.isExtended) {
+        return;
+      }
+      if (underExtension.has(ref.id)) {
+        ref.isRecursive = true;
+        return;
+      }
+      try {
+        underExtension.add(ref.id);
+        JsonPointer.forEachDeep(ref.refSchema, (value, pointer) => {
+          if (hasOwn(value, '$ref') && isString(value['$ref'])) {
+            const referredPointer = JsonPointer.compile(value['$ref']);
+            const theReference = refInfos.get(uri + '/' + referredPointer);
+            extendRefs(theReference, underExtension);
+          }
+
+        });
+        if (!ref.isRecursive) {
+          ref.referred.forEach((refd) => {
+            const value = referrers.get(refd);
+            delete value['$ref'];
+            _arraymerger(value, ref.refSchema);
+          });
+        }
+      } finally {
+        ref.isExtended = true;
+        underExtension.delete(ref.id);
+      }
+
+    };
+
+    const baseExtensions = new Set<string>();
+    refInfos.forEach((ref) => extendRefs(ref, baseExtensions));
+
+  };
+
+  schemaProcessor(schema, schema, 'base:');
+
+  // Debug purposes only
+  const subSchemas = new Map<string, any>();
+
+
+  const schemaEnumerator = (schema, basepath) => {
+    if (typeof schema != 'object') {
+      console.log(`Schema at ${basepath} is not object.`, schema);
+      return schema;
+    }
+    if (hasOwn(schema, 'allOf')) {
+      if (!isArray(schema.allOf)) {
+        console.log(`Schema at ${basepath} has allOf, but it is not an array`);
+        return schema;
+      }
+      const allOf = <any[]> schema.allOf;
+      schema = allOf.reduce((container, subschema) => _arraymerger(container, subschema), {});
+      schema.type = 'object';
+      return schemaEnumerator(schema, basepath);
+    }
+    if (hasOwn(schema, 'type')) {
+      // TODO: GYM: array type?
+      if (typeof schema.type != "string") {
+        /// ??? allOf ???
+        console.log(`Schema at ${basepath} has type, but only string type is supported`);
+        return schema;
+      }
+      if (schema.type === 'object') {
+        if (hasOwn(schema, 'properties')) {
+          forEach(schema.properties, (prop, name) => {
+            schema.properties[name] = schemaEnumerator(prop, basepath + '/' + name)
+          })
+        }
+        if (hasOwn(schema, 'patternProperties')) {
+          forEach(schema.patternProperties, (prop, name) => {
+            schema.patternProperties[name] = schemaEnumerator(prop, basepath + '//' + name + '/')
+          })
+        }
+      } else if (schema.type === 'array') {
+        if (hasOwn(schema, 'items')) {
+          if (typeof schema.items === 'object') {
+            if (isArray(schema.items)) {
+              forEach(schema.items, (prop, idx) => {
+                schema.items[idx] = schemaEnumerator(prop, basepath + '/' + idx)
+              })
+            } else {
+              schema.items = schemaEnumerator(schema.items, basepath + '/-');
+            }
+          }
+        }
+      }
+
+      subSchemas.set(basepath, schema);
+      return schema;
+
+    } else {
+      if (hasOwn(schema, 'properties') || hasOwn(schema, 'patternProperties')) {
+        schema.type = 'object';
+        return schemaEnumerator(schema, basepath);
+      }
+      if (hasOwn(schema, 'items')) {
+        schema.type = 'array';
+        return schemaEnumerator(schema, basepath);
+      }
+      subSchemas.set(basepath, schema);
+      return schema;
+    }
+  };
+
+  schema = schemaEnumerator(schema, '#');
+
+  //console.log(subSchemas);
+
+  return schema;
+
+}
 /**
  * 'getSchemaReference' function
  *
@@ -178,6 +339,7 @@ export function getFromSchema(
  * @param {object} recursiveRefMap - Optional map of recursive links
  * @return {object} - The refernced schema sub-section
  */
+/*
 export function getSchemaReference(
   schema: any, reference: any, schemaRefLibrary: any = null,
   recursiveRefMap: Map<string, string> = null
@@ -238,6 +400,7 @@ export function getSchemaReference(
     return newSchema;
   }
 }
+*/
 
 /**
  * 'resolveRecursiveReferences' function

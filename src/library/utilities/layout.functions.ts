@@ -721,6 +721,9 @@ export function mapLayout(
 export function buildTitleMap(
   titleMap: any, enumList: any, fieldRequired: boolean = true
 ): { name: string, value: any }[] {
+  // TODO: clarify if this settings is necessary: empty selection is a must
+  // or first will be selected on the page, but not in the tracking objects
+  fieldRequired =false;
   let newTitleMap: { name: string, value: any }[] = [];
   let hasEmptyValue: boolean = false;
   if (titleMap) {

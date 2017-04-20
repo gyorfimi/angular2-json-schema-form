@@ -213,7 +213,8 @@ export class JsonSchemaFormComponent implements DoCheck, OnChanges, OnInit {
         this.jsf.compileAjvSchema();
 
         // Resolve all schema $ref links
-        this.jsf.resolveSchemaRefLinks();
+        //this.jsf.resolveSchemaRefLinks();
+        this.jsf.simplifySchema();
       }
 
       // Initialize 'layout'

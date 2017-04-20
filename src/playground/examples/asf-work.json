@@ -1,0 +1,77 @@
+{
+  "schema": {
+    "type": "object",
+    "properties": {
+      "common": {
+        "title": "Alapadatok",
+        "type": "object",
+        "properties": {
+          "name": {
+            "title": "Sz\u00e1ll\u00e1shely megnevez\u00e9se",
+            "$ref": "#/definitions/multilang-text"
+          },
+          "description": {
+            "title": "Sz\u00e1ll\u00e1shely le\u00edr\u00e1sa",
+            "$ref": "#/definitions/multilang-text"
+          },
+          "type": {
+            "title": "Sz\u00e1ll\u00e1shely t\u00edpusa",
+            "type": "string"
+          },
+          "osztalyba-sorolas-hotelstars-rendszer-alapjan": {
+            "title": "Oszt\u00e1lyba sorol\u00e1s (HotelStars rendszer alapj\u00e1n)",
+            "type": "string",
+            "enum": [
+              "*****",
+              "****",
+              "***",
+              "**",
+              "*",
+              "*****Superior",
+              "****Superior",
+              "***Superior",
+              "***+",
+              "Nem min\u0151s\u00edtett",
+              "Apartman ",
+              "Apartman de Lux",
+              "I. oszt\u00e1ly",
+              "II. oszt\u00e1ly",
+              "III. oszt\u00e1ly",
+              "A kateg\u00f3ria",
+              "B kateg\u00f3ria",
+              "C kateg\u00f3ria"
+            ]
+          }
+        }
+      }
+    },
+    "definitions": {
+      "multilang-text-item": {
+        "type": "object",
+        "properties": {
+          "lang": {
+            "type": "string",
+            "enum": [
+              "hu",
+              "en",
+              "de"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "lang",
+          "text"
+        ]
+      },
+      "multilang-text": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/multilang-text-item"
+        }
+      }
+    }
+  }
+}

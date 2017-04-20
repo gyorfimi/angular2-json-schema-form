@@ -22,7 +22,7 @@ export class PlaygroundComponent implements OnInit, AfterViewInit {
       'asf': [
         'asf-simple', 'asf-basic-json-schema-type', 'asf-bootstrap-grid',
         'asf-complex-key-support', 'asf-array', 'asf-tab-array',
-        'asf-titlemap-examples', 'asf-kitchen-sink', 'asf-hack-conditional-required', 'asf-allof', 'asf-multilang',
+        'asf-titlemap-examples', 'asf-kitchen-sink', 'asf-hack-conditional-required', 'asf-allof', 'asf-multilang', 'asf-work',
       ],
       'rjsf': [
         'rjsf-simple', 'rjsf-nested', 'rjsf-arrays', 'rjsf-numbers', 'rjsf-widgets',
@@ -65,6 +65,7 @@ export class PlaygroundComponent implements OnInit, AfterViewInit {
         'asf-hack-conditional-required': 'Hack: Conditional Required',
         'asf-allof': 'AllOf (extend)',
         'asf-multilang': 'Multilanguage texts',
+        'asf-work': 'What-to-do now',
       },
       'rjsf': {
         'rjsf-simple': 'Simple',
