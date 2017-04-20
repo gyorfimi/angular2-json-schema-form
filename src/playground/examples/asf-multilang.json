@@ -1,0 +1,35 @@
+{
+  "schema": {
+    "definitions": {
+      "multilang-text-item": {
+        "type": "object",
+        "properties": {
+          "lang": {
+            "type": "string",
+            "enum": ["hu", "en"]
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": ["lang", "text"]
+      },
+      "multilang-text": {
+        "type": "array",
+        "items": {"$ref": "#/definitions/multilang-text-item"}
+      }
+    },
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Megnevezés",
+        "$ref": "#/definitions/multilang-text"
+      },
+      "descr": {
+        "title": "Leírás",
+        "$ref": "#/definitions/multilang-text"
+      }
+
+    }
+  }
+}

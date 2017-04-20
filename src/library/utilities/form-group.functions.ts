@@ -52,7 +52,11 @@ export function buildFormGroupTemplate(
   const schema: any = JsonPointer.get(jsf.schema, schemaPointer);
   let useValues: any = jsf.globalOptions.setSchemaDefaults ?
     mergeValues(JsonPointer.get(schema, '/default'), setValues) : setValues;
+
   const schemaType: string | string[] = JsonPointer.get(schema, '/type');
+
+
+
   let controlType: 'FormGroup' | 'FormArray' | 'FormControl' | '$ref';
   if (schemaType === 'object' && hasOwn(schema, 'properties')) {
     controlType = 'FormGroup';
