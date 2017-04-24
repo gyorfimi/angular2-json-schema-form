@@ -12,6 +12,7 @@ import {
   isDefined, isObject, isString, JsonPointer, parseText
 } from './utilities/index';
 import {processSchemaReferences} from "./utilities/json-schema.functions";
+import {FormGroupTemplate} from "./utilities/schema-utilities-types";
 
 export type CheckboxItem = { name: string, value: any, checked?: boolean };
 
@@ -28,7 +29,7 @@ export class JsonSchemaFormService {
   public initialValues: any = {}; // The initial data model (e.g. previously submitted data)
   public schema: any = {}; // The internal JSON Schema
   public layout: any[] = []; // The internal Form layout
-  public formGroupTemplate: any = {}; // The template used to create formGroup
+  public formGroupTemplate: FormGroupTemplate = null; // The template used to create formGroup
   public formGroup: any = null; // The Angular 2 formGroup, which powers the reactive form
   public framework: any = null; // The active framework component
 
@@ -93,7 +94,7 @@ export class JsonSchemaFormService {
     this.initialValues = {};
     this.schema = {};
     this.layout = [];
-    this.formGroupTemplate = {};
+    this.formGroupTemplate = null;
     this.formGroup = null;
     this.framework = null;
     this.data = {};
@@ -119,6 +120,7 @@ export class JsonSchemaFormService {
   public buildFormGroupTemplate(setValues: boolean = true) {
     this.formGroupTemplate =
       buildFormGroupTemplate(this, this.initialValues, setValues);
+    console.log(this.formGroupTemplate);
   }
 
   private validateData(newValue: any, updateSubscriptions: boolean = true): void {

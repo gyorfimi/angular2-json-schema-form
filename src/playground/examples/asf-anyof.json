@@ -1,0 +1,86 @@
+{
+  "schema": {
+    "definitions": {
+      "service-common-props": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "service-accomodation-props": {
+        "type": "object",
+        "properties": {
+          "serviceType": {
+            "type": "string",
+            "enum": ["accomodation"]
+          },
+          "roomNum": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "roomNum"
+        ]
+      },
+      "service-wellness-props": {
+        "type": "object",
+        "properties": {
+          "serviceType": {
+            "type": "string",
+            "enum": ["wellnes"]
+          },
+          "poolNum": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "poolNum"
+        ]
+      },
+      "service-accomodation": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/definitions/service-common-props"
+          },
+          {
+            "$ref": "#/definitions/service-accomodation-props"
+          }
+        ]
+      },
+      "service-wellness": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/definitions/service-common-props"
+          },
+          {
+            "$ref": "#/definitions/service-wellness-props"
+          }
+        ]
+      }
+    },
+    "type": "object",
+    "properties": {
+      "services": {
+        "title": "Szolgáltatások",
+        "type": "array",
+        "items": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/service-accomodation"
+            },
+            {
+              "$ref": "#/definitions/service-wellness"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

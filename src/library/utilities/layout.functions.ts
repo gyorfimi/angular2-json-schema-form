@@ -92,9 +92,10 @@ export function buildLayout(jsf: any, widgetLibrary: any): any[] {
 
     if (hasOwn(newNode, 'dataPointer')) {
       if (newNode.dataPointer === '*') {
-        return buildLayoutFromSchema(
-          jsf, widgetLibrary, newNode.layoutPointer.slice(0, -2)
+        const layoutFromSchema = buildLayoutFromSchema( jsf
+          , widgetLibrary, newNode.layoutPointer.slice(0, -2)
         );
+        return layoutFromSchema;
       }
       newNode.dataPointer =
         JsonPointer.toGenericPointer(newNode.dataPointer, jsf.arrayMap);

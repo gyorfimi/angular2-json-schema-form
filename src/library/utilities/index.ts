@@ -8,3 +8,4 @@ export * from './json.validators';
 export * from './json-schema.functions';
 export * from './form-group.functions';
 export * from './layout.functions';
+export * from './schema-utilities-types';

@@ -6,6 +6,9 @@ import {
 import { forEach, hasOwn, mergeFilteredObject } from './utility.functions';
 import { JsonPointer, Pointer } from './jsonpointer.functions';
 import { JsonValidators } from './json.validators';
+import {ValidatorContainer} from "./schema-utilities-types";
+import enumerate = Reflect.enumerate;
+
 
 /**
  * JSON Schema function library:
@@ -261,6 +264,15 @@ export function processSchemaReferences(schema: any) {
       console.log(`Schema at ${basepath} is not object.`, schema);
       return schema;
     }
+    if (hasOwn(schema, 'anyOf')) {
+      return {
+        type: "object", properties: schema.anyOf.map(subschema => schemaEnumerator(subschema, basepath + 'allOf/'))
+          .reduce((coll, item, idx) => {
+            coll["$" + idx] = item;
+            return coll;
+          }, {})
+      };
+    }
     if (hasOwn(schema, 'allOf')) {
       if (!isArray(schema.allOf)) {
         console.log(`Schema at ${basepath} has allOf, but it is not an array`);
@@ -327,80 +339,6 @@ export function processSchemaReferences(schema: any) {
   return schema;
 
 }
-/**
- * 'getSchemaReference' function
- *
- * Return the sub-section of a schema referred to
- * by a JSON Pointer or '$ref' object.
- *
- * @param {object} schema - The schema to return a sub-section from
- * @param {string|object} reference - JSON Pointer or '$ref' object
- * @param {object} schemaRefLibrary - Optional library of resolved refernces
- * @param {object} recursiveRefMap - Optional map of recursive links
- * @return {object} - The refernced schema sub-section
- */
-/*
-export function getSchemaReference(
-  schema: any, reference: any, schemaRefLibrary: any = null,
-  recursiveRefMap: Map<string, string> = null
-): any {
-  let schemaPointer: string;
-  let newSchema: any;
-  if (isArray(reference) || typeof reference === 'string') {
-    schemaPointer = JsonPointer.compile(reference);
-  } else if (isObject(reference) && Object.keys(reference).length === 1 &&
-    reference.hasOwnProperty('$ref') && typeof reference.$ref === 'string'
-  ) {
-    schemaPointer = JsonPointer.compile(reference.$ref);
-  } else {
-    console.error('getSchemaReference error: ' +
-      'reference must be a JSON Pointer or $ref link');
-    console.error(reference);
-    return reference;
-  }
-  if (recursiveRefMap) {
-    schemaPointer = resolveRecursiveReferences(schemaPointer, recursiveRefMap);
-  }
-  if (schemaPointer === '') {
-    return _.cloneDeep(schema);
-  } else if (schemaRefLibrary && schemaRefLibrary.hasOwnProperty(schemaPointer)) {
-    return _.cloneDeep(schemaRefLibrary[schemaPointer]);
-
-  // TODO: Add ability to download remote schema, if necessary
-  // } else if (schemaPointer.slice(0, 4) === 'http') {
-  //    http.get(schemaPointer).subscribe(response => {
-  //     // TODO: check for recursive references
-  //     // TODO: test and adjust to allow for for async response
-  //     if (schemaRefLibrary) schemaRefLibrary[schemaPointer] = response.json();
-  //     return response.json();
-  //    });
-
-  } else {
-    newSchema = _.cloneDeep(JsonPointer.get(schema, schemaPointer));
-
-    // If newSchema is an allOf array, combine array elements
-    // TODO: Check and fix duplicate elements with different values
-    if (isObject(newSchema) && Object.keys(newSchema).length === 1 &&
-      hasOwn(newSchema, 'allOf') && isArray(newSchema.allOf)
-    ) {
-      newSchema = newSchema.allOf
-        .map(object => getSchemaReference(schema, object.$ref, schemaRefLibrary, recursiveRefMap))
-        .reduce((schema1, schema2) => _.mergeWith(schema1, schema2,
-            (objValue, srcValue) => {
-                if (_.isArray(objValue) && _.isArray(srcValue)) {
-                  return objValue.concat(srcValue);
-                }
-        }), {});
-        console.log(newSchema);
-    }
-
-    if (schemaRefLibrary) {
-      schemaRefLibrary[schemaPointer] = _.cloneDeep(newSchema);
-    }
-    return newSchema;
-  }
-}
-*/
 
 /**
  * 'resolveRecursiveReferences' function
@@ -645,8 +583,7 @@ export function updateInputOptions(layoutNode: any, schema: any, jsf: any) {
     [], fixUiKeys);
   mergeFilteredObject(newOptions, JsonPointer.get(schema, '/ui:widget'),
     [], fixUiKeys);
-  mergeFilteredObject(newOptions, schema, ['properties', 'items', 'required',
-    'type', 'x-schema-form', '$ref'], fixUiKeys);
+  mergeFilteredObject(newOptions, schema, ['properties', 'items', 'required',  'type', 'x-schema-form', '$ref', 'definitions'], fixUiKeys);
   mergeFilteredObject(newOptions, JsonPointer.get(schema, '/x-schema-form/options'),
     [], fixUiKeys);
   mergeFilteredObject(newOptions, JsonPointer.get(schema, '/x-schema-form'),
@@ -697,9 +634,9 @@ export function updateInputOptions(layoutNode: any, schema: any, jsf: any) {
  * @param {schema} schema
  * @return {validators}
  */
-export function getControlValidators(schema: any) {
+export function getControlValidators(schema: any): ValidatorContainer {
   if (!isObject(schema)) { return null; }
-  let validators: any = { };
+  let validators: ValidatorContainer = {};
   if (hasOwn(schema, 'type')) {
     switch (schema.type) {
       case 'string':
@@ -735,3 +672,48 @@ export function getControlValidators(schema: any) {
   if (hasOwn(schema, 'enum')) { validators['enum'] = [schema['enum']]; }
   return validators;
 }
+
+
+export function getCommonSchemaProperties(schemaArray: any, schemaPointer: string) {
+  if (!isArray(schemaArray)) {
+    console.log(schemaPointer + ".AnyOf should be and array of schema");
+    return {};
+  }
+  let commonProps: string[]  = _.intersection.apply(_,<string[][]> (schemaArray.map( item => (item.properties) ? (Object.keys(item.properties)) : []).filter(item => item)));
+  schemaArray = schemaArray.filter(item => item.properties);
+  if (!schemaArray) {
+    console.log(schemaPointer + ".AnyOf should be and array of schema");
+    return {};
+  }
+
+  // get common properties of common items;
+  let commons = commonProps.reduce( (result, prop) => {
+      let intersectionArgs = schemaArray.map(item => Object.keys(item.properties[prop]).filter(item => item != "enum").map( pname => { return {prop: pname, value: item.properties[prop][pname]}})).concat([_.isEqual]);
+      result[prop] = _.intersectionWith.apply(_, intersectionArgs).reduce((coll, pv) => { coll[pv.prop] = pv.value; return coll; }, {});
+
+      let enumList = _.uniq(schemaArray.map(item => item.properties[prop]["enum"]).filter(item => isArray(item)).reduce((coll, item) => coll.concat(item), []));
+      if (enumList) {
+        result[prop]["enum"] = enumList;
+      }
+
+      return result;
+    }, {});
+
+  return commons;
+}
+
+
+  /*let last = schemaArray.slice(-1)[0];
+  let result = {};
+  if (last && last.properties) {
+    for(let prop of commonProps) {
+      let propInfo = last.properties[prop];
+      result[prop] = { title: propInfo.title, type: propInfo.type, description: propInfo.description };
+    }
+    console.log(result);
+    return result;
+  }
+  console.log(schemaPointer + ".AnyOf - can not select the common properties");
+  return {};
+}
+*/

@@ -7,7 +7,7 @@ import { JsonSchemaFormService } from '../library/json-schema-form.service';
 
 @Component({
   selector: 'select-widget-widget',
-  template: `<div #widgetContainer></div>`,
+  template: `<div #widgetContainer [attr.role]="layoutNode?.widget"></div>`,
 })
 export class SelectWidgetComponent implements OnChanges, OnInit {
   public newComponent: ComponentRef<any> = null;
@@ -15,8 +15,7 @@ export class SelectWidgetComponent implements OnChanges, OnInit {
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
   @Input() dataIndex: number[];
-  @ViewChild('widgetContainer', { read: ViewContainerRef })
-    public widgetContainer: ViewContainerRef;
+  @ViewChild('widgetContainer', { read: ViewContainerRef })    public widgetContainer: ViewContainerRef;
 
   constructor(
     public componentFactory: ComponentFactoryResolver,

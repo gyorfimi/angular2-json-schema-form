@@ -11,7 +11,7 @@ import { Component, Input } from '@angular/core';
         layoutItem?.arrayItem && layoutItem?.options?.arrayItemType === 'list'">
       <!-- && (layout[layout.length - 1].tupleItems || 0 < (layout.length - 2)) -->
 
-      <select-framework-widget
+       <select-framework-widget
         [formID]="formID"
         [dataIndex]="layoutItem?.arrayItem ? (dataIndex || []).concat(i) : (dataIndex || [])"
         [layoutIndex]="(layoutIndex || []).concat(i)"
