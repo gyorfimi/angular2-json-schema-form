@@ -20,9 +20,10 @@ import { TabComponent } from './tab.component';
 import { TabsComponent } from './tabs.component';
 import { TemplateComponent } from './template.component';
 import { TextareaComponent } from './textarea.component';
+import {AlternativeComponent} from "./alternative.component";
 
 export const ALL_WIDGETS = [
-  AddReferenceComponent, ButtonComponent, CheckboxComponent,
+  AddReferenceComponent, ButtonComponent, CheckboxComponent, AlternativeComponent,
   CheckboxesComponent, FieldsetComponent, FileComponent, HiddenComponent,
   InputComponent, MessageComponent, NoneComponent, NumberComponent,
   RadiosComponent, RootComponent, SectionComponent, SelectComponent,

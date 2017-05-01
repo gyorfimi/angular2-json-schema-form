@@ -1,11 +1,13 @@
 import * as _ from 'lodash';
 
 import {
-  buildFormGroupTemplate, checkInlineType, copy, forEach, getControl,
+  checkInlineType, copy, forEach, getControl,
   getFromSchema, getInputType, hasOwn, inArray, isArray, isEmpty,
   isInputRequired, isNumber, isObject, isDefined, isString, JsonPointer,
   toTitleCase, updateInputOptions
 } from './index';
+import {BasicSchemaPreprocessor, SchemaPreprocessor} from "./form-group.functions";
+import {AnyOfDiscriminatorInfo} from "./schema-utilities-types";
 
 /**
  * Layout function library:
@@ -349,15 +351,16 @@ export function buildLayoutFromSchema(
   arrayItem: boolean = false, arrayItemType: string = null,
   removable: boolean = null, forRefLibrary: boolean = false
 ): any {
-  const schema = JsonPointer.get(jsf.schema, schemaPointer);
+  console.log(schemaPointer, dataPointer, layoutPointer);
+  const schema = (jsf.schemaNodeInfo.has("schema:"+schemaPointer)) ? (jsf.schemaNodeInfo.get("schema:"+schemaPointer)) : JsonPointer.get(jsf.schema, schemaPointer);
   if (!hasOwn(schema, 'type') && !hasOwn(schema, 'x-schema-form') &&
-    !hasOwn(schema, '$ref')) { return null; }
+    !hasOwn(schema, '$ref') && !hasOwn(schema, 'anyOf')) { return null; }
   const newNodeType: string = getInputType(schema);
   let newNode: any = {
     _id: _.uniqueId(),
     arrayItem: arrayItem,
     dataPointer: JsonPointer.toGenericPointer(dataPointer, jsf.arrayMap),
-    dataType: schema.type || (hasOwn(schema, '$ref') ? '$ref' : null),
+    dataType: schema.type || (hasOwn(schema, '$ref') ? '$ref' : (hasOwn(schema,'anyOf') ? 'anyOf' : null)),
     layoutPointer: layoutPointer.replace(/\/\d+/g, '/-') || '/-',
     options: {},
     type: newNodeType,
@@ -383,19 +386,45 @@ export function buildLayoutFromSchema(
   } else if (!newNode.options.title && newNode.name && !/^\d+$/.test(newNode.name)) {
     newNode.options.title = toTitleCase(newNode.name.replace(/_/g, ' '));
   }
-  if (newNode.dataType === 'object') {
+  if (newNode.dataType === 'anyOf') {
+    let anyOf = schema.anyOf;
+    let discriminatorProperty = <AnyOfDiscriminatorInfo> (jsf.schemaNodeInfo.get("discriminator:"+schemaPointer + "/anyOf"));
+    console.log("DP", discriminatorProperty);
+    newNode.discriminator= buildLayoutFromSchema(
+        jsf, widgetLibrary,
+        newNode.layoutPointer + '/discriminator',
+        schemaPointer + '/anyOf/' + discriminatorProperty.name,
+        dataPointer + '/discriminator/'+ discriminatorProperty.name,
+        false, null, null, forRefLibrary
+     );
+
+     newNode.groups = {};
+     discriminatorProperty.discriminatorValues.forEach((discriminatorValue) => {
+         newNode.groups[discriminatorValue] = buildLayoutFromSchema(jsf, widgetLibrary,
+           newNode.layoutPointer + '/groups/' + discriminatorValue,
+           schemaPointer + '/anyOf/' + discriminatorProperty.discriminator[discriminatorValue],
+           dataPointer+ '/groups/' + discriminatorValue
+         );
+
+        newNode.groups[discriminatorValue].items = newNode.groups[discriminatorValue].items.filter((ctrl) => ctrl.name != discriminatorProperty.name);
+       }
+     )
+
+    } else if (newNode.dataType === 'object') {
+    let schemaProperties = schema.properties;
     let newFieldset: any[] = [];
     let newKeys: string[] = [];
-    if (isObject(schema.properties)) {
-      newKeys = isArray(schema.properties['ui:order']) ?
-        schema['properties']['ui:order'] : Object.keys(schema['properties']);
+    if (isObject(schemaProperties)) {
+      newKeys = isArray(schemaProperties['ui:order']) ?
+        schemaProperties['ui:order'] : Object.keys(schemaProperties);
     } else if (hasOwn(schema, 'additionalProperties')) {
       return null;
       // TODO: Figure out what to do with additionalProperties
       // ... possibly provide a way to enter both key names and values?
+      // ...what to do when anyof?
     }
     for (let key of newKeys) {
-      if (hasOwn(schema.properties, key)) {
+      if (hasOwn(schemaProperties, key)) {
         let newLayoutPointer: string;
         if (newNode.layoutPointer === '' && !forRefLibrary) {
           newLayoutPointer = '/-';
@@ -476,12 +505,14 @@ export function buildLayoutFromSchema(
           }
         } else if (newNode.items.length > templateArray.length) {
           for (let i = templateArray.length, l = newNode.items.length; i < l; i++) {
-            templateArray.push(buildFormGroupTemplate(
-              jsf, null, false,
+           let schemaPreprocessor= new BasicSchemaPreprocessor(jsf.globalOptions, jsf.schema, null,
+              false,
               schemaPointer + '/additionalItems',
               dataPointer + '/' + i,
               JsonPointer.toControlPointer(jsf.formGroupTemplate, dataPointer + '/' + i)
-            ));
+             , jsf);
+
+            templateArray.push(schemaPreprocessor.formGroupTemplate);
           }
         }
         if (newNode.items.length < maxItems && newNode.options.addable !== false &&

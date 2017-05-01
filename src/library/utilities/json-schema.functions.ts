@@ -265,13 +265,8 @@ export function processSchemaReferences(schema: any) {
       return schema;
     }
     if (hasOwn(schema, 'anyOf')) {
-      return {
-        type: "object", properties: schema.anyOf.map(subschema => schemaEnumerator(subschema, basepath + 'allOf/'))
-          .reduce((coll, item, idx) => {
-            coll["$" + idx] = item;
-            return coll;
-          }, {})
-      };
+      schema.anyOf = schema.anyOf.map( subschema => schemaEnumerator(subschema, basepath + 'anyOf/'));
+      return schema;
     }
     if (hasOwn(schema, 'allOf')) {
       if (!isArray(schema.allOf)) {
@@ -470,6 +465,7 @@ export function getInputType(schema: any, layoutNode: any = null): string {
       return 'text';
     }
   }
+  if (hasOwn(schema, 'anyOf')) { console.log("anyOf"); return 'alternative'; }
   if (hasOwn(schema, '$ref')) { return '$ref'; }
   return 'text';
 }
@@ -674,46 +670,5 @@ export function getControlValidators(schema: any): ValidatorContainer {
 }
 
 
-export function getCommonSchemaProperties(schemaArray: any, schemaPointer: string) {
-  if (!isArray(schemaArray)) {
-    console.log(schemaPointer + ".AnyOf should be and array of schema");
-    return {};
-  }
-  let commonProps: string[]  = _.intersection.apply(_,<string[][]> (schemaArray.map( item => (item.properties) ? (Object.keys(item.properties)) : []).filter(item => item)));
-  schemaArray = schemaArray.filter(item => item.properties);
-  if (!schemaArray) {
-    console.log(schemaPointer + ".AnyOf should be and array of schema");
-    return {};
-  }
-
-  // get common properties of common items;
-  let commons = commonProps.reduce( (result, prop) => {
-      let intersectionArgs = schemaArray.map(item => Object.keys(item.properties[prop]).filter(item => item != "enum").map( pname => { return {prop: pname, value: item.properties[prop][pname]}})).concat([_.isEqual]);
-      result[prop] = _.intersectionWith.apply(_, intersectionArgs).reduce((coll, pv) => { coll[pv.prop] = pv.value; return coll; }, {});
-
-      let enumList = _.uniq(schemaArray.map(item => item.properties[prop]["enum"]).filter(item => isArray(item)).reduce((coll, item) => coll.concat(item), []));
-      if (enumList) {
-        result[prop]["enum"] = enumList;
-      }
-
-      return result;
-    }, {});
-
-  return commons;
-}
 
 
-  /*let last = schemaArray.slice(-1)[0];
-  let result = {};
-  if (last && last.properties) {
-    for(let prop of commonProps) {
-      let propInfo = last.properties[prop];
-      result[prop] = { title: propInfo.title, type: propInfo.type, description: propInfo.description };
-    }
-    console.log(result);
-    return result;
-  }
-  console.log(schemaPointer + ".AnyOf - can not select the common properties");
-  return {};
-}
-*/

@@ -6,18 +6,22 @@ import * as Ajv from 'ajv';
 import * as _ from 'lodash';
 
 import {
-  buildFormGroup, buildFormGroupTemplate, buildLayout, buildSchemaFromData,
+  buildFormGroup, buildLayout, buildSchemaFromData,
   buildSchemaFromLayout, convertJsonSchema3to4, fixJsonFormOptions,
   formatFormData, getControl, hasOwn, hasValue, isArray,
   isDefined, isObject, isString, JsonPointer, parseText
 } from './utilities/index';
 import {processSchemaReferences} from "./utilities/json-schema.functions";
-import {FormGroupTemplate} from "./utilities/schema-utilities-types";
+import {FormGlobalOptions, FormGroupTemplate} from "./utilities/schema-utilities-types";
+import {
+  ArrayMapType, DataMapType, SchemaNodeInfoType, SchemaPreprocessor, SchemaPreprocessorInfoHolder,
+  TemplateRefLibraryType
+} from "./utilities/form-group.functions";
 
 export type CheckboxItem = { name: string, value: any, checked?: boolean };
 
 @Injectable()
-export class JsonSchemaFormService {
+export class JsonSchemaFormService implements SchemaPreprocessorInfoHolder {
   public JsonFormCompatibility: boolean = false;
   public ReactJsonSchemaFormCompatibility: boolean = false;
   public AngularSchemaFormCompatibility: boolean = false;
@@ -30,7 +34,7 @@ export class JsonSchemaFormService {
   public schema: any = {}; // The internal JSON Schema
   public layout: any[] = []; // The internal Form layout
   public formGroupTemplate: FormGroupTemplate = null; // The template used to create formGroup
-  public formGroup: any = null; // The Angular 2 formGroup, which powers the reactive form
+  public formGroup: AbstractControl = null; // The Angular 2 formGroup, which powers the reactive form
   public framework: any = null; // The active framework component
 
   public data: any = {}; // Form data, formatted with correct data types
@@ -42,40 +46,17 @@ export class JsonSchemaFormService {
   public isValidChanges: Subject<any> = new Subject(); // isValid observable
   public validationErrorChanges: Subject<any> = new Subject(); // validationErrors observable
 
-  public arrayMap: Map<string, number> = new Map<string, number>(); // Maps arrays in data object and number of tuple values
-  public dataMap: Map<string, any> = new Map<string, any>(); // Maps paths in data model to schema and formGroup paths
+  public arrayMap: ArrayMapType = new Map(); // Maps arrays in data object and number of tuple values
+  public dataMap: DataMapType= new Map(); // Maps paths in data model to schema and formGroup paths
   public dataRecursiveRefMap: Map<string, string> = new Map<string, string>(); // Maps recursive reference points in data model
   public layoutRefLibrary: any = {}; // Library of layout nodes for adding to form
-  public templateRefLibrary: any = {}; // Library of formGroup templates for adding to form
+
+  public templateRefLibrary: TemplateRefLibraryType ;
+  public schemaNodeInfo: SchemaNodeInfoType;
 
   // Default global form options
-  public globalOptionDefaults: any = {
-    addSubmit: 'auto', // Add a submit button if layout does not have one?
-      // for addSubmit: true = always, false = never, 'auto' = only if layout is undefined
-    debug: false, // Show debugging output?
-    fieldsRequired: false, // Are there any required fields in the form?
-    framework: 'bootstrap-3', // The framework to load
-    widgets: {}, // Any custom widgets to load
-    loadExternalAssets: false, // Load external css and JavaScript for framework?
-    pristine: { errors: true, success: true },
-    supressPropertyTitles: false,
-    setSchemaDefaults: true,
-    validateOnRender: false,
-    formDefaults: { // Default options for form controls
-      addable: true, // Allow adding items to an array or $ref point?
-      orderable: true, // Allow reordering items within an array?
-      removable: true, // Allow removing items from an array or $ref point?
-      allowExponents: false, // Allow exponent entry in number fields?
-      enableErrorState: true, // Apply 'has-error' class when field fails validation?
-      // disableErrorState: false, // Don't apply 'has-error' class when field fails validation?
-      enableSuccessState: true, // Apply 'has-success' class when field validates?
-      // disableSuccessState: false, // Don't apply 'has-success' class when field validates?
-      feedback: false, // Show inline feedback icons?
-      notitle: false, // Hide title?
-      readonly: false, // Set control as read only?
-    },
-  };
-  public globalOptions: any;
+  public globalOptionDefaults = new FormGlobalOptions();
+  public globalOptions: FormGlobalOptions = null;
 
   constructor() {
     this.globalOptions = _.cloneDeep(this.globalOptionDefaults);
@@ -117,10 +98,13 @@ export class JsonSchemaFormService {
     return fixJsonFormOptions(layout);
   }
 
-  public buildFormGroupTemplate(setValues: boolean = true) {
-    this.formGroupTemplate =
-      buildFormGroupTemplate(this, this.initialValues, setValues);
-    console.log(this.formGroupTemplate);
+  public preprocessSchema(setValues: boolean = true) {
+    let schemaPreprocessor = new SchemaPreprocessor(this.globalOptions, this.schema, setValues);
+    this.formGroupTemplate = schemaPreprocessor.formGroupTemplate;
+    this.dataMap = schemaPreprocessor.dataMap;
+    this.arrayMap = schemaPreprocessor.arrayMap;
+    this.schemaNodeInfo = schemaPreprocessor.schemaNodeInfo;
+    this.templateRefLibrary = schemaPreprocessor.templateRefLibrary;
   }
 
   private validateData(newValue: any, updateSubscriptions: boolean = true): void {
@@ -146,7 +130,8 @@ export class JsonSchemaFormService {
   }
 
   public buildFormGroup() {
-    this.formGroup = <FormGroup>buildFormGroup(this.formGroupTemplate);
+    this.formGroup = <FormGroup>buildFormGroup(this.formGroupTemplate)
+    console.log(this.formGroup);
     if (this.formGroup) {
       this.compileAjvSchema();
       this.validateData(this.formGroup.value, false);
@@ -161,6 +146,7 @@ export class JsonSchemaFormService {
 
   public buildLayout(widgetLibrary: any) {
     this.layout = buildLayout(this, widgetLibrary);
+    console.log(this.layout);
   }
 
   public setOptions(newOptions: any): void {
@@ -169,13 +155,13 @@ export class JsonSchemaFormService {
     }
     if (hasOwn(this.globalOptions.formDefaults, 'disableErrorState')) {
       this.globalOptions.formDefaults.enableErrorState =
-        !this.globalOptions.formDefaults.disableErrorState;
-      delete this.globalOptions.formDefaults.disableErrorState;
+       !(<any>this.globalOptions.formDefaults).disableErrorState;
+      delete (<any>this.globalOptions.formDefaults).disableErrorState;
     }
     if (hasOwn(this.globalOptions.formDefaults, 'disableSuccessState')) {
       this.globalOptions.formDefaults.enableSuccessState =
-        !this.globalOptions.formDefaults.disableSuccessState;
-      delete this.globalOptions.formDefaults.disableSuccessState;
+        !(<any>this.globalOptions.formDefaults).disableSuccessState;
+      delete (<any>this.globalOptions.formDefaults).disableSuccessState;
     }
   }
 
@@ -273,7 +259,7 @@ export class JsonSchemaFormService {
   }
 
   public updateValue(ctx: any, value): void {
-
+console.log(ctx, value);
     // Set value of current control
     ctx.controlValue = value;
     if (ctx.boundControl) {

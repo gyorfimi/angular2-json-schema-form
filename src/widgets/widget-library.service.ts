@@ -24,6 +24,7 @@ import { TemplateComponent } from './template.component';
 import { TextareaComponent } from './textarea.component';
 
 import * as _ from 'lodash';
+import {AlternativeComponent} from "./alternative.component";
 
 @Injectable()
 export class WidgetLibraryService {
@@ -87,6 +88,7 @@ export class WidgetLibraryService {
     // 'label': automatically added to data widgets
     // 'legend': automatically added to fieldsets
     'fieldset': FieldsetComponent, // A fieldset, with an optional legend
+    'alternative': AlternativeComponent,
 
   // Non-HTML layout widgets
     'array': 'fieldset', // A list you can add, remove and reorder

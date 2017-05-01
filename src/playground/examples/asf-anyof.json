@@ -17,7 +17,9 @@
         "properties": {
           "serviceType": {
             "type": "string",
-            "enum": ["accomodation"]
+            "enum": [
+              "accomodation"
+            ]
           },
           "roomNum": {
             "type": "number"
@@ -32,7 +34,9 @@
         "properties": {
           "serviceType": {
             "type": "string",
-            "enum": ["wellnes"]
+            "enum": [
+              "wellnes"
+            ]
           },
           "poolNum": {
             "type": "number"
@@ -67,18 +71,31 @@
     },
     "type": "object",
     "properties": {
+      "name": {
+        "title": "Név",
+        "type": "string"
+      },
       "services": {
         "title": "Szolgáltatások",
         "type": "array",
         "items": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/service-accomodation"
+          "type": "object",
+          "properties": {
+            "subname": {
+              "title": "Alnév",
+              "type": "string"
             },
-            {
-              "$ref": "#/definitions/service-wellness"
+            "vals": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/service-accomodation"
+                },
+                {
+                  "$ref": "#/definitions/service-wellness"
+                }
+              ]
             }
-          ]
+          }
         }
       }
     }

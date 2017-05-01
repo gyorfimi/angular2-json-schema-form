@@ -337,7 +337,7 @@ export class JsonSchemaFormComponent implements DoCheck, OnChanges, OnInit {
         this.jsf.compileAjvSchema();
 
         // Build the Angular 2 FormGroup template from the schema
-        this.jsf.buildFormGroupTemplate();
+        this.jsf.preprocessSchema();
 
         // Update all layout elements, add values, widgets, and validators,
         // replace any '*' with a layout built from all schema elements,
