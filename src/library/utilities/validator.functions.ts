@@ -514,7 +514,7 @@ export function toSchemaType(
  * @param {object} object
  * @return {object}
  */
-export function isPromise(object: any): object is Promise<any> {
+export function isPromise(object: any): boolean {
   return !!object && typeof object.then === 'function';
 }
 

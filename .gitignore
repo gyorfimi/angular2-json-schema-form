@@ -1,7 +1,7 @@
 # Generated
 compiled
 dist
-docs
+
 
 # Node
 node_modules
@@ -18,3 +18,4 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 /mail-doc/
+npm-debug.*

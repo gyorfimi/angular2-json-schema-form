@@ -26,7 +26,7 @@ export interface FormGroupTemplateGroupInfo extends FormGroupDescriptorBase, Sub
 
 export interface AlternativeFormGroupTemplate  {
   discriminator: string;
-  group: FormGroupTemplateGroupInfo;
+  group: FormGroupTemplateSubGroup;
 }
 
 export interface AlternativeFormGroupTemplateItems {
@@ -40,11 +40,11 @@ export interface AnyOfDiscriminatorInfo {
   discriminatorValues: string[];
 }
 
-export interface AnyOfTemplateGroupInfo extends FormGroupDescriptorBase {
+export interface AnyOfTemplateGroupInfo extends FormGroupDescriptorBase, SubControlHolderBase {
   controlType: 'AnyOf';
   discriminator: AnyOfDiscriminatorInfo;
   discriminatorControl: FormGroupTemplate;
-  controls: AlternativeFormGroupTemplateItems;
+  distinctControls: AlternativeFormGroupTemplateItems;
 }
 
 export interface FormGroupTemplateArrayInfo extends FormGroupDescriptorBase, SubControlHolderBase, FormGroupHasValidator {

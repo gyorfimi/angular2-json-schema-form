@@ -83,7 +83,6 @@ export class BasicSchemaPreprocessor {
       this.templateRefLibrary = schemaPreprocessorInfoHolder.templateRefLibrary;
     }
     this.formGroupTemplate = this.preprocessSchemaAndGetTemplate(this.setValues, mapArrays, schemaPointer, dataPointer, templatePointer);
-    console.log(this);
   }
 
   private preprocessSchemaAndGetTemplate(setValues: any = null, mapArrays: boolean, schemaPointer: string, dataPointer: string, templatePointer: any): FormGroupTemplate {
@@ -107,42 +106,29 @@ export class BasicSchemaPreprocessor {
       controlType = 'FormControl';
     }
     if (dataPointer !== '' && !this.dataMap.has(dataPointer)) {
-      this.dataMap.set(dataPointer, new Map);
-      this.dataMap.get(dataPointer).set('schemaPointer', schemaPointer);
-      this.dataMap.get(dataPointer).set('schemaType', schema.type);
+      const dataMapInfo =  new Map<string, any>();
+      dataMapInfo.set('schemaPointer', schemaPointer);
+      dataMapInfo.set('schemaType', schema.type);
       if (controlType) {
-        this.dataMap.get(dataPointer).set('templatePointer', templatePointer);
-        this.dataMap.get(dataPointer).set('templateType', controlType);
+        dataMapInfo.set('templatePointer', templatePointer);
+        dataMapInfo.set('templateType', controlType);
       }
+      this.dataMap.set(dataPointer, dataMapInfo);
+
+
       const genericDataPointer =
         JsonPointer.toGenericPointer(dataPointer, this.arrayMap);
       if (!this.dataMap.has(genericDataPointer)) {
-        this.dataMap.set(genericDataPointer, new Map);
-        this.dataMap.get(genericDataPointer).set('schemaPointer', schemaPointer);
-        this.dataMap.get(genericDataPointer).set('schemaType', schema.type);
+        const genericDataMapInfo =  new Map<string, any>();
+        this.dataMap.set(genericDataPointer, genericDataMapInfo);
+        genericDataMapInfo.set('schemaPointer', schemaPointer);
+        genericDataMapInfo.set('schemaType', schema.type);
       }
     }
     let validators: ValidatorContainer = getControlValidators(schema);
     switch (controlType) {
       case 'FormGroup':
-        let formGroupControls: FormGroupTemplateSubGroup = {};
-        if (this.globalOptions.setSchemaDefaults) {
-          useValues = mergeValues(
-            JsonPointer.get(schema, '/properties/default'), useValues);
-        }
-        forEach(schema.properties, (item, key) => {
-          if (key !== 'ui:order') {
-            formGroupControls[key] = this.preprocessSchemaAndGetTemplate(
-              JsonPointer.get(useValues, [<string>key]),
-              mapArrays,
-              schemaPointer + '/properties/' + key,
-              dataPointer + '/' + key,
-              templatePointer + '/controls/' + key
-            );
-          }
-        });
-        this.globalOptions.fieldsRequired =
-          setRequiredFields(schema, formGroupControls);
+        let formGroupControls =  this.buildFormGroupTemplateFromObjectSchema(useValues, schema, mapArrays, schemaPointer, dataPointer + '/', templatePointer, []);
         return {controlType: controlType, controls: formGroupControls, validators: validators};
       case 'FormArray':
         const minItems = schema.minItems || 0;
@@ -260,34 +246,46 @@ export class BasicSchemaPreprocessor {
       case "AnyOf":
         let discriminatorProperty = this.getDiscriminatorProperty(schema.anyOf, schemaPointer);
         if (!discriminatorProperty) return {controlType: 'FormControl', value: null, validators: {}};
+        const genericDataPointer =
+          JsonPointer.toGenericPointer(dataPointer, this.arrayMap);
+
+        this.dataMap.get(genericDataPointer).set('discriminator', discriminatorProperty);
+        this.dataMap.get(genericDataPointer).set('anyof', true);
         this.schemaNodeInfo.set("schema:" + schemaPointer + '/anyOf/' + discriminatorProperty.name, discriminatorProperty.schema);
         this.schemaNodeInfo.set("discriminator:" + schemaPointer+ '/anyOf', discriminatorProperty);
+        let controls: FormGroupTemplateSubGroup = {};
         let discriminatorControl = this.preprocessSchemaAndGetTemplate(JsonPointer.get(useValues, discriminatorProperty.name), mapArrays,
           schemaPointer + '/anyOf/' + discriminatorProperty.name,
           dataPointer + '/' + discriminatorProperty.name,
           templatePointer + '/discriminatorControl'
         );
-        let controls: AlternativeFormGroupTemplateItems = {};
+        let distictControls: AlternativeFormGroupTemplateItems = {};
+        controls[discriminatorProperty.name] = discriminatorControl;
+        let discriminatedProperties = {};
+
         forEach(discriminatorProperty.discriminatorValues, (discriminatorValue) => {
           let idx = discriminatorProperty.discriminator[discriminatorValue];
           let item = schema.anyOf[idx];
           if (item.type == 'object' && item.properties) {
-            let group: FormGroupTemplateGroupInfo = <FormGroupTemplateGroupInfo> this.preprocessSchemaAndGetTemplate(useValues, mapArrays,
+            let group = this.buildFormGroupTemplateFromObjectSchema(useValues, item, mapArrays,
               schemaPointer + '/anyOf/' + idx,
-              dataPointer+ '/' + discriminatorValue + '.' ,
-              templatePointer + '/controls/' + discriminatorValue + '/group'
+              dataPointer + '/' + discriminatorValue + '.',
+              templatePointer + '/distinctControls/' + discriminatorValue + '/group', [discriminatorProperty.name]
             );
-
-            if (group.controlType = 'FormGroup') {
-              JsonPointer.remove(group, '/controls/' + discriminatorProperty.name);
-              controls[discriminatorValue] = {discriminator: discriminatorValue, group: group};
-            }
+            forEach(group, (item, key) => {
+              controls[discriminatorValue + '.' + key] = item;
+            });
+            distictControls[discriminatorValue] = {discriminator: discriminatorValue, group: group};
+            discriminatedProperties[discriminatorValue] = Object.keys(group);
           }
         });
+        this.dataMap.get(genericDataPointer).set('discriminatedProperties', discriminatedProperties);
+
         return {
           controlType: 'AnyOf',
           discriminator: discriminatorProperty,
           discriminatorControl: discriminatorControl,
+          distinctControls: distictControls,
           controls: controls
         };
       case '$ref':
@@ -309,16 +307,46 @@ export class BasicSchemaPreprocessor {
     }
   }
 
+  private buildFormGroupTemplateFromObjectSchema(useValues: any, schema: any, mapArrays: boolean, schemaPointer: string, dataPointerPrefix: string, templatePointer: string, propertiesToSkip: string[]) {
+    let formGroupControls: FormGroupTemplateSubGroup = {};
+    if (this.globalOptions.setSchemaDefaults) {
+      useValues = mergeValues(
+        JsonPointer.get(schema, '/properties/default'), useValues);
+    }
+    forEach(schema.properties, (item, key) => {
+      if (key !== 'ui:order' && !inArray(key, propertiesToSkip)) {
+        formGroupControls[key] = this.preprocessSchemaAndGetTemplate(
+          JsonPointer.get(useValues, [<string>key]),
+          mapArrays,
+          schemaPointer + '/properties/' + key,
+          dataPointerPrefix + key,
+          templatePointer + '/controls/' + key
+        );
+      }
+    });
+    this.globalOptions.fieldsRequired =
+      setRequiredFields(schema, formGroupControls);
+    return formGroupControls;
+  }
+
   private getDiscriminatorProperty(schemaArray: any, schemaPointer: string): AnyOfDiscriminatorInfo {
     if (!isArray(schemaArray)) {
-      console.log(schemaPointer + ".AnyOf should be and array of schema");
+      console.log(schemaPointer + "/anyof should be an array of schema");
       return null;
     }
+
+    if (schemaArray.filter(item =>hasOwn(item,'$ref')).lenght > 0) {
+      console.log(schemaPointer + "/anyof should be an array of object, should not have any (recursive) reference");
+      console.log(schemaArray);
+      return null;
+    }
+
     schemaArray = schemaArray.filter(item => item.properties);
     if (!schemaArray) {
-      console.log(schemaPointer + ".AnyOf should be and array of object");
+      console.log(schemaPointer + "/anyof should be an array of object");
       return null;
     }
+
 
     let commonEnumProps: string[] = _.intersection.apply(_,
       <string[][]> (schemaArray.map(item => (item.properties) ? (Object.keys(item.properties)
@@ -346,7 +374,7 @@ export class BasicSchemaPreprocessor {
 
     let discriminatorProps = commonEnumProps.filter((item) => commons[item].enum && _.uniq(commons[item].enum).length == commons[item].enum.length);
     if (!discriminatorProps || discriminatorProps.length != 1) {
-      console.log(schemaPointer + ".AnyOf has not exactly one discrimator property (common enum property): properties:" , discriminatorProps);
+      console.log(schemaPointer + "/anyof has not exactly one discrimator property (common enum property): properties:" , discriminatorProps);
       return null;
     }
 
@@ -367,29 +395,6 @@ export class SchemaPreprocessor extends BasicSchemaPreprocessor {
   constructor(globalOptions: FormGlobalOptions, schema: any, setValues: any) {
     super(globalOptions, schema, setValues, true, '', '', '', null);
   }
-}
-
-
-
-export class ChangeableFormGroupItems {
-  [discrimantorValue: string]: FormGroup;
-}
-
-export class ChangeableFormGroup extends FormGroup {
-
-  public constructor(public discriminatorControl: FormControl,  public discriminatorName: string, public discriminatorValues: string[], public groups:ChangeableFormGroupItems) {
-    super({});
-    this.selectGroup(discriminatorControl.value)
-  }
-
-  public selectGroup(value: string) {
-    Object.keys(this.controls).forEach((ctrl) => this.removeControl(ctrl));
-    this.addControl(this.discriminatorName, this.discriminatorControl);
-    if (hasOwn(this.groups,value)) {
-      Object.keys(this.groups[value].controls).forEach((ctrl) => this.addControl(ctrl, this.groups[value].controls[ctrl]));
-    }
-  }
-
 }
 
 /**
@@ -425,14 +430,15 @@ export function buildFormGroup(template: FormGroupTemplate): AbstractControl {
         });
         return new FormGroup(groupControls, validatorFn);
       case 'AnyOf':
-        let discriminatorControl = <FormControl> buildFormGroup(template.discriminatorControl);
-        let groupItems: ChangeableFormGroupItems = {};
-        forEach(template.discriminator.discriminatorValues, (discriminatorValue) => {
-              let ctrls = (<AnyOfTemplateGroupInfo> template).controls[discriminatorValue];
-              groupItems[discriminatorValue] = <FormGroup> buildFormGroup(ctrls.group);
+        let subControls: { [key: string]: AbstractControl } = {};
+        forEach(template.controls, (item, key) => {
+              let ctrl = template.controls[key];
+              if (ctrl) {
+                subControls[key] = <FormGroup> buildFormGroup(item);
+              }
           }
         );
-        return new ChangeableFormGroup(discriminatorControl, template.discriminator.name, template.discriminator.discriminatorValues, groupItems);
+        return new FormGroup(subControls, validatorFn);
       case 'FormArray':
         return new FormArray(_.filter(_.map(template.controls,
           controls => buildFormGroup(controls)
@@ -568,6 +574,30 @@ export function formatFormData(
       }
     }
   });
+  JsonPointer.forEachDeep(formattedData, (value, dataPointer) => {
+    let genericPointer: string =
+      JsonPointer.toGenericPointer(JsonPointer.has(dataMap, [dataPointer, 'schemaType']) ?
+        dataPointer :
+        resolveRecursiveReferences(dataPointer, recursiveRefMap, arrayMap), arrayMap);
+    let propertyDataMapInfo = dataMap.get(genericPointer);
+
+
+    if (propertyDataMapInfo && propertyDataMapInfo.get('anyof') && propertyDataMapInfo.get('discriminator') && propertyDataMapInfo.get('discriminatedProperties') ) {
+       let discriminator = propertyDataMapInfo.get('discriminator');
+       let discriminatedProperties = propertyDataMapInfo.get('discriminatedProperties');
+       let discValue = value[discriminator.name];
+       let originValue = Object.assign({}, value);
+       discriminator.discriminatorValues.forEach((discriminatorValue) => {
+         if (discriminatedProperties[discriminatorValue]) {
+           discriminatedProperties[discriminatorValue].forEach((propName) => { delete value[discriminatorValue + '.' + propName]});
+         }
+       });
+
+       if (discValue && discriminatedProperties[discValue]) {
+         discriminatedProperties[discValue].forEach((propName) => { value[propName] = originValue[discValue + '.' + propName]});
+       }
+    }
+  });
   return formattedData;
 }
 
@@ -595,18 +625,6 @@ export function getControl(
     let l = dataPointerArray.length - (returnGroup ? 1 : 0);
     for (let i = 0; i < l; ++i) {
       let key = dataPointerArray[i];
-      if (subGroup instanceof ChangeableFormGroup) {
-        console.log(subGroup, key)
-        if (key == 'discriminator') {
-          subGroup = (<ChangeableFormGroup> subGroup).discriminatorControl;
-          i++; // skip the name
-          continue;
-        }
-        if (key == 'groups') {
-          subGroup = (<ChangeableFormGroup> subGroup).groups;
-          continue;
-        }
-      }
       if (subGroup.hasOwnProperty('controls')) {
         subGroup = subGroup.controls;
       }

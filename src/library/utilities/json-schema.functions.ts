@@ -222,6 +222,7 @@ export function processSchemaReferences(schema: any) {
       }
       if (underExtension.has(ref.id)) {
         ref.isRecursive = true;
+        console.log(ref.id + " is recursive.", ref)
         return;
       }
       try {
@@ -234,13 +235,13 @@ export function processSchemaReferences(schema: any) {
           }
 
         });
-        if (!ref.isRecursive) {
+        //if (!ref.isRecursive) {
           ref.referred.forEach((refd) => {
             const value = referrers.get(refd);
             delete value['$ref'];
             _arraymerger(value, ref.refSchema);
           });
-        }
+        //}
       } finally {
         ref.isExtended = true;
         underExtension.delete(ref.id);
@@ -465,7 +466,7 @@ export function getInputType(schema: any, layoutNode: any = null): string {
       return 'text';
     }
   }
-  if (hasOwn(schema, 'anyOf')) { console.log("anyOf"); return 'alternative'; }
+  if (hasOwn(schema, 'anyOf')) { return 'alternative'; }
   if (hasOwn(schema, '$ref')) { return '$ref'; }
   return 'text';
 }

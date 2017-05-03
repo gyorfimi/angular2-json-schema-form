@@ -131,7 +131,6 @@ export class JsonSchemaFormService implements SchemaPreprocessorInfoHolder {
 
   public buildFormGroup() {
     this.formGroup = <FormGroup>buildFormGroup(this.formGroupTemplate)
-    console.log(this.formGroup);
     if (this.formGroup) {
       this.compileAjvSchema();
       this.validateData(this.formGroup.value, false);
@@ -146,7 +145,6 @@ export class JsonSchemaFormService implements SchemaPreprocessorInfoHolder {
 
   public buildLayout(widgetLibrary: any) {
     this.layout = buildLayout(this, widgetLibrary);
-    console.log(this.layout);
   }
 
   public setOptions(newOptions: any): void {
@@ -259,7 +257,6 @@ export class JsonSchemaFormService implements SchemaPreprocessorInfoHolder {
   }
 
   public updateValue(ctx: any, value): void {
-console.log(ctx, value);
     // Set value of current control
     ctx.controlValue = value;
     if (ctx.boundControl) {

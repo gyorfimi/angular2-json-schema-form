@@ -335,7 +335,7 @@ export function buildLayout(jsf: any, widgetLibrary: any): any[] {
  * 'buildLayoutFromSchema' function
  *
  * @param {any} jsf -
- * @param {number = 0} layoutIndex -
+ * @param widgetLibrary
  * @param {string = ''} layoutPointer -
  * @param {string = ''} schemaPointer -
  * @param {string = ''} dataPointer -
@@ -343,15 +343,17 @@ export function buildLayout(jsf: any, widgetLibrary: any): any[] {
  * @param {string = null} arrayItemType -
  * @param {boolean = null} removable -
  * @param {boolean = false} forRefLibrary -
+ * @param dataPointerPrefixforObjectProperties
+ * @param objectPropertiesToSkip
  * @return {any}
  */
 export function buildLayoutFromSchema(
   jsf: any, widgetLibrary: any, layoutPointer: string = '',
   schemaPointer: string = '', dataPointer: string = '',
   arrayItem: boolean = false, arrayItemType: string = null,
-  removable: boolean = null, forRefLibrary: boolean = false
+  removable: boolean = null, forRefLibrary: boolean = false,
+  dataPointerPrefixforObjectProperties: string = '', objectPropertiesToSkip: string[] = []
 ): any {
-  console.log(schemaPointer, dataPointer, layoutPointer);
   const schema = (jsf.schemaNodeInfo.has("schema:"+schemaPointer)) ? (jsf.schemaNodeInfo.get("schema:"+schemaPointer)) : JsonPointer.get(jsf.schema, schemaPointer);
   if (!hasOwn(schema, 'type') && !hasOwn(schema, 'x-schema-form') &&
     !hasOwn(schema, '$ref') && !hasOwn(schema, 'anyOf')) { return null; }
@@ -389,28 +391,30 @@ export function buildLayoutFromSchema(
   if (newNode.dataType === 'anyOf') {
     let anyOf = schema.anyOf;
     let discriminatorProperty = <AnyOfDiscriminatorInfo> (jsf.schemaNodeInfo.get("discriminator:"+schemaPointer + "/anyOf"));
-    console.log("DP", discriminatorProperty);
-    newNode.discriminator= buildLayoutFromSchema(
+    if (discriminatorProperty) {
+      newNode.discriminator = buildLayoutFromSchema(
         jsf, widgetLibrary,
         newNode.layoutPointer + '/discriminator',
         schemaPointer + '/anyOf/' + discriminatorProperty.name,
-        dataPointer + '/discriminator/'+ discriminatorProperty.name,
+        dataPointer + '/' + dataPointerPrefixforObjectProperties + discriminatorProperty.name,
         false, null, null, forRefLibrary
-     );
+      );
 
-     newNode.groups = {};
-     discriminatorProperty.discriminatorValues.forEach((discriminatorValue) => {
-         newNode.groups[discriminatorValue] = buildLayoutFromSchema(jsf, widgetLibrary,
-           newNode.layoutPointer + '/groups/' + discriminatorValue,
-           schemaPointer + '/anyOf/' + discriminatorProperty.discriminator[discriminatorValue],
-           dataPointer+ '/groups/' + discriminatorValue
-         );
+      if (newNode.options.discriminatorMap && !newNode.discriminator.options.titleMap) {
+        newNode.discriminator.options.titleMap = newNode.options.discriminatorMap;
+      }
+      newNode.groups = {};
+      discriminatorProperty.discriminatorValues.forEach((discriminatorValue) => {
+          newNode.groups[discriminatorValue] = buildLayoutFromSchema(jsf, widgetLibrary,
+            newNode.layoutPointer + '/groups/' + discriminatorValue,
+            schemaPointer + '/anyOf/' + discriminatorProperty.discriminator[discriminatorValue],
+            dataPointer, false, null, null, false, dataPointerPrefixforObjectProperties + discriminatorValue + '.', [discriminatorProperty.name]
+          );
+        }
+      )
+    }
 
-        newNode.groups[discriminatorValue].items = newNode.groups[discriminatorValue].items.filter((ctrl) => ctrl.name != discriminatorProperty.name);
-       }
-     )
-
-    } else if (newNode.dataType === 'object') {
+  } else if (newNode.dataType === 'object') {
     let schemaProperties = schema.properties;
     let newFieldset: any[] = [];
     let newKeys: string[] = [];
@@ -424,7 +428,7 @@ export function buildLayoutFromSchema(
       // ...what to do when anyof?
     }
     for (let key of newKeys) {
-      if (hasOwn(schemaProperties, key)) {
+      if (hasOwn(schemaProperties, key) && !inArray(key, objectPropertiesToSkip)) {
         let newLayoutPointer: string;
         if (newNode.layoutPointer === '' && !forRefLibrary) {
           newLayoutPointer = '/-';
@@ -435,7 +439,7 @@ export function buildLayoutFromSchema(
           jsf, widgetLibrary,
           newLayoutPointer,
           schemaPointer + '/properties/' + key,
-          dataPointer + '/' + key,
+          dataPointer + '/' + dataPointerPrefixforObjectProperties + key,
           false, null, null, forRefLibrary
         );
         if (innerItem) {
@@ -568,7 +572,7 @@ export function buildLayoutFromSchema(
       }
       let newNodeRef: any = {
         arrayItem: true,
-        dataPointer: dataPointer + '/-',
+        dataPointer: JsonPointer.toGenericPointer(dataPointer+ '/-', jsf.arrayMap),
         layoutPointer: newNode.layoutPointer + '/items/-',
         listItems: newNode.listItems,
         options: {
@@ -579,7 +583,7 @@ export function buildLayoutFromSchema(
         tupleItems: newNode.tupleItems,
         type: '$ref',
         widget: widgetLibrary.getWidget('$ref'),
-        $ref: dataPointer + '/-',
+        $ref: JsonPointer.toGenericPointer(dataPointer+ '/-', jsf.arrayMap)
       };
       if (isDefined(newNode.options.maxItems)) {
         newNodeRef.options.maxItems = newNode.options.maxItems;

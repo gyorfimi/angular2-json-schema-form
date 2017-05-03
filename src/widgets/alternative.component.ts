@@ -15,18 +15,17 @@ import { JsonSchemaFormService } from '../library/json-schema-form.service';
         [class.sr-only]="options?.notitle"
         [innerHTML]="options?.title"
         (click)="expand()"></legend>
-        <select-framework-widget
+        <select-framework-widget *ngIf="layoutNode.discriminator"
                 [formID]="formID"
                 [dataIndex]="dataIndex || []"
                 [layoutIndex]="layoutIndex || []"
                 [layoutNode]="layoutNode.discriminator"></select-framework-widget>
 
         <div *ngFor="let layoutKey of discriminatedLayout();">
-            {{ layoutKey }}
             <root-widget *ngIf="expanded"
                          [formID]="formID"
                          [layout]="layoutNode.groups[layoutKey]?.items"
-                         [dataIndex]="dataIndex"
+                         [dataIndex]="dataIndex || []"
                          [layoutIndex]="layoutIndex"
                          [isOrderable]="options?.orderable"></root-widget>
         </div>
@@ -60,8 +59,18 @@ export class AlternativeComponent implements OnInit {
   }
 
   public discriminatedLayout() {
-    if (this.layoutNode.groups) {
-        return Object.keys(this.layoutNode.groups);
+    if (this.layoutNode && this.layoutNode.groups) {
+        let nameFilter = (item) => true;
+
+        if (this.layoutNode.discriminator && this.layoutNode.discriminator.name) {
+          let value = this.jsf.getControlValue(this);
+          nameFilter = (item) => false;
+          if (value && typeof  value == "object" && value[this.layoutNode.discriminator.name]) {
+             nameFilter = (item) => item == value[this.layoutNode.discriminator.name];
+          }
+        }
+
+        return Object.keys(this.layoutNode.groups).filter(nameFilter);
     }
     return [];
   }

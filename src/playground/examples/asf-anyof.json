@@ -1,11 +1,45 @@
 {
   "schema": {
     "definitions": {
+      "services" : {
+        "title": "Szolgáltatás",
+        "ui:widget": {
+          "options": {
+            "discriminatorMap": [
+              {
+                "value": "accomodation",
+                "name": "Szállás"
+              },
+              {
+                "value": "wellnes",
+                "name": "Pihentető szolgáltatás (Wellnes)"
+              },
+              {
+                "value": "horseriding",
+                "name": "Lovaglás"
+              }
+            ]
+          }
+        },
+
+        "anyOf": [
+          {
+            "$ref": "#/definitions/service-accomodation"
+          },
+          {
+            "$ref": "#/definitions/service-wellness"
+          },
+          {
+            "$ref": "#/definitions/service-horseriding"
+          }
+        ]
+      },
       "service-common-props": {
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "title": "Szolgáltatás neve"
           }
         },
         "required": [
@@ -16,6 +50,7 @@
         "type": "object",
         "properties": {
           "serviceType": {
+            "title": "Szolgáltatás típusa",
             "type": "string",
             "enum": [
               "accomodation"
@@ -33,6 +68,7 @@
         "type": "object",
         "properties": {
           "serviceType": {
+            "title": "Szolgáltatás típusa",
             "type": "string",
             "enum": [
               "wellnes"
@@ -46,6 +82,41 @@
           "poolNum"
         ]
       },
+      "service-horseriding-props": {
+        "type": "object",
+        "properties": {
+          "serviceType": {
+            "title": "Szolgáltatás típusa",
+            "type": "string",
+            "enum": [
+              "horseriding"
+            ]
+          },
+          "riding_type": {
+            "title": "Lovas szolgáltatás típusa",
+            "type": "string",
+            "enum": ["country", "field", "show"],
+            "ui:widget": {
+              "options": {
+                "titleMap": [
+                  {
+                    "value": "country",
+                    "name": "Terep"
+                  },
+                  {
+                    "value": "field",
+                    "name": "Pálya"
+                  },
+                  {
+                    "value": "show",
+                    "name": "Bemutató"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
       "service-accomodation": {
         "type": "object",
         "allOf": [
@@ -54,6 +125,17 @@
           },
           {
             "$ref": "#/definitions/service-accomodation-props"
+          }
+        ]
+      },
+      "service-horseriding": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/definitions/service-common-props"
+          },
+          {
+            "$ref": "#/definitions/service-horseriding-props"
           }
         ]
       },
@@ -81,19 +163,12 @@
         "items": {
           "type": "object",
           "properties": {
-            "subname": {
-              "title": "Alnév",
+            "title": {
+              "title": "Megnevezés",
               "type": "string"
             },
-            "vals": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/service-accomodation"
-                },
-                {
-                  "$ref": "#/definitions/service-wellness"
-                }
-              ]
+            "description": {
+              "$ref": "#/definitions/services"
             }
           }
         }

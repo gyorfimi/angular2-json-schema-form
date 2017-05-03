@@ -22,7 +22,9 @@ import { buildTitleMap } from '../library/utilities/index';
         [disabled]="controlDisabled"
         [id]="'control' + layoutNode?._id"
         [name]="controlName"
-        (input)="updateValue($event)">
+        (change)="updateValue($event)"
+        (input)="updateValue($event)"
+      >
         <option *ngFor="let selectItem of selectList"
            [value]="selectItem.value"
            [selected]="selectItem.value === controlValue">{{selectItem.name}}</option>

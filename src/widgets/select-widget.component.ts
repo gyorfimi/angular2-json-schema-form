@@ -7,7 +7,7 @@ import { JsonSchemaFormService } from '../library/json-schema-form.service';
 
 @Component({
   selector: 'select-widget-widget',
-  template: `<div #widgetContainer [attr.role]="layoutNode?.widget"></div>`,
+  template: `<div #widgetContainer ></div>`,
 })
 export class SelectWidgetComponent implements OnChanges, OnInit {
   public newComponent: ComponentRef<any> = null;
