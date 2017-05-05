@@ -27,7 +27,7 @@ export class PlaygroundComponent implements OnInit, AfterViewInit {
       'rjsf': [
         'rjsf-simple', 'rjsf-nested', 'rjsf-arrays', 'rjsf-numbers', 'rjsf-widgets',
         'rjsf-ordering', 'rjsf-references', 'rjsf-errors', 'rjsf-large',
-        'rjsf-date-and-time', 'rjsf-validation', 'rjsf-files', 'rjsf-custom',
+        'rjsf-date-and-time', 'rjsf-validation', 'rjsf-files', 'rjsf-anyof', 'rjsf-custom',
       ],
       'jsf': [
         'jsf-gettingstarted',
@@ -82,6 +82,7 @@ export class PlaygroundComponent implements OnInit, AfterViewInit {
         'rjsf-date-and-time': 'Date & Time',
         'rjsf-validation': 'Validation',
         'rjsf-files': 'Files',
+        'rjsf-anyof': 'Any-Of',
       },
       'jsf': {
         'jsf-gettingstarted': 'Getting started',

@@ -212,9 +212,6 @@ export class JsonSchemaFormComponent implements DoCheck, OnChanges, OnInit {
         // Initialize ajv and compile schema
         this.jsf.compileAjvSchema();
 
-        // Resolve all schema $ref links
-        //this.jsf.resolveSchemaRefLinks();
-        this.jsf.simplifySchema();
       }
 
       // Initialize 'layout'
@@ -266,6 +263,7 @@ export class JsonSchemaFormComponent implements DoCheck, OnChanges, OnInit {
       if (alternateLayout) {
         JsonPointer.forEachDeep(alternateLayout, (value, pointer) => {
           const schemaPointer: string = pointer.replace(/\//g, '/properties/')
+            .replace(/\/properties\/definitions\/properties\//g, '/definitions/')
             .replace(/\/properties\/items\/properties\//g, '/items/properties/')
             .replace(/\/properties\/titleMap\/properties\//g, '/titleMap/properties/');
           if (hasValue(value) && hasValue(pointer)) {
@@ -274,22 +272,44 @@ export class JsonSchemaFormComponent implements DoCheck, OnChanges, OnInit {
             let key = JsonPointer.toKey(schemaPointer);
             let itemPointer: string | string[];
             // If 'ui:order' object found, copy into schema root
-            if (key === 'ui:order') {
-              itemPointer = schemaPointer;
-            // Copy other alternate layout options to schema 'x-schema-form',
-            // (like Angular Schema Form options) and remove any 'ui:' prefixes
-            } else {
-              itemPointer = groupPointer.concat(['x-schema-form',
-                key.slice(0, 3) === 'ui:' ? key.slice(3) : key
-              ]);
-            }
-            if (JsonPointer.has(this.jsf.schema, groupPointer) &&
-              !JsonPointer.has(this.jsf.schema, itemPointer)
-            ) {
-              JsonPointer.set(this.jsf.schema, itemPointer, value);
+            if (key.slice(0, 3) === 'ui:' ) {
+              if (key === 'ui:order') {
+                itemPointer = schemaPointer;
+                // Copy other alternate layout options to schema 'x-schema-form',
+                // (like Angular Schema Form options) and remove any 'ui:' prefixes
+              } else {
+                itemPointer = groupPointer.concat(['x-schema-form',
+                  key.slice(0, 3) === 'ui:' ? key.slice(3) : key
+                ]);
+              }
+              if (JsonPointer.has(this.jsf.schema, groupPointer)) {
+                if (!JsonPointer.has(this.jsf.schema, itemPointer)) {
+                  JsonPointer.set(this.jsf.schema, itemPointer, value);
+                } else {
+                  let itemPointerOfSchema = JsonPointer.compile(itemPointer);
+                  console.log("Schema has already got items at ", itemPointerOfSchema);
+                }
+              }  else {
+                let groupPointerOfSchema = JsonPointer.compile(itemPointer);
+                console.log("Schema does not have item at ", groupPointerOfSchema);
+              }
             }
           }
-        });
+        },
+        false, '', alternateLayout, (value, pointer, subkey, subpointer, subValue, root) => {
+            let key = JsonPointer.toKey(pointer);
+            if (key.slice(0, 3) === 'ui:' ) {
+              return false;
+            }
+            return true;
+          }
+        );
+      }
+
+      if (!isEmpty(this.jsf.schema)) {
+        // Resolve all schema $ref links
+        //this.jsf.resolveSchemaRefLinks();
+        this.jsf.simplifySchema();
       }
 
       // Initialize 'initialValues'

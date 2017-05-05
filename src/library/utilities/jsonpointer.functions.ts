@@ -321,25 +321,29 @@ export class JsonPointer {
    * including optional 4th and 5th parameterss to specify the initial
    * root object and pointer.
    *
-   * @param {object} object - the initial object or array
+   * @param {object} currentObject - the initial object or array
    * @param {(v: any, k?: string, o?: any, p?: any) => any} function - iteratee function
    * @param {boolean = false} bottomUp - optional, set to TRUE to reverse direction
    * @param {object = object} rootObject - optional, root object or array
    * @param {string = ''} pointer - optional, JSON Pointer to object within rootObject
    */
   static forEachDeep(
-    object: any, fn: (v: any, p?: string, o?: any) => any,
-    bottomUp: boolean = false, pointer: string = '', rootObject: any = object
+    currentObject: any, fn: (value: any, pointer: string, root: any) => any,
+    bottomUp: boolean = false, pointer: string = '', rootObject: any = currentObject,
+    filterFn: (value: any, pointer: string, subkey: string, subpointer: string, subValue: any, root: any) => boolean = null
   ): void {
     if (typeof fn === 'function') {
-      if (!bottomUp) { fn(object, pointer, rootObject); }
-      if (isObject(object) || isArray(object)) {
-        for (let key of Object.keys(object)) {
+      if (!bottomUp) { fn(currentObject, pointer, rootObject); }
+      if ((isObject(currentObject) || isArray(currentObject))) {
+        for (let key of Object.keys(currentObject)) {
           const newPointer: string = pointer + '/' + this.escape(key);
-          this.forEachDeep(object[key], fn, bottomUp, newPointer, rootObject);
+          const newObject = currentObject[key];
+          if (!filterFn || filterFn(currentObject, pointer, key, newPointer, newObject, rootObject)) {
+              this.forEachDeep(newObject, fn, bottomUp, newPointer, rootObject, filterFn);
+          }
         }
       }
-      if (bottomUp) { fn(object, pointer, rootObject); }
+      if (bottomUp) { fn(currentObject, pointer, rootObject); }
     } else {
       console.error('forEachDeep error: Iterator must be a function.');
     }

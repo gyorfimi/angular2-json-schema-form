@@ -1,0 +1,186 @@
+{
+  "schema": {
+    "definitions": {
+      "services": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/service-accomodation"
+          },
+          {
+            "$ref": "#/definitions/service-wellness"
+          },
+          {
+            "$ref": "#/definitions/service-horseriding"
+          }
+        ]
+      },
+      "service-common-props": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Szolgáltatás neve"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "service-accomodation-props": {
+        "type": "object",
+        "properties": {
+          "serviceType": {
+            "enum": [
+              "accomodation"
+            ]
+          },
+          "roomNum": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "roomNum"
+        ]
+      },
+      "service-wellness-props": {
+        "type": "object",
+        "properties": {
+          "serviceType": {
+            "enum": [
+              "wellnes"
+            ]
+          },
+          "poolNum": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "poolNum"
+        ]
+      },
+      "service-horseriding-props": {
+        "type": "object",
+        "properties": {
+          "serviceType": {
+            "enum": [
+              "horseriding"
+            ]
+          },
+          "riding_type": {
+            "title": "Lovas szolgáltatás típusa",
+            "type": "string",
+            "enum": [
+              "country",
+              "field",
+              "show"
+            ]
+          }
+        }
+      },
+      "service-accomodation": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/definitions/service-common-props"
+          },
+          {
+            "$ref": "#/definitions/service-accomodation-props"
+          }
+        ]
+      },
+      "service-horseriding": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/definitions/service-common-props"
+          },
+          {
+            "$ref": "#/definitions/service-horseriding-props"
+          }
+        ]
+      },
+      "service-wellness": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/definitions/service-common-props"
+          },
+          {
+            "$ref": "#/definitions/service-wellness-props"
+          }
+        ]
+      }
+    },
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Név",
+        "type": "string"
+      },
+      "services": {
+        "title": "Szolgáltatások",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "title": "Megnevezés",
+              "type": "string"
+            },
+            "description": {
+              "$ref": "#/definitions/services"
+            }
+          }
+        }
+      }
+    }
+  },
+  "UISchema": {
+    "definitions": {
+      "service-horseriding-props": {
+        "riding_type": {
+          "ui:options": {
+            "titleMap": [
+              {
+                "value": "country",
+                "name": "Terep"
+              },
+              {
+                "value": "field",
+                "name": "Pálya"
+              },
+              {
+                "value": "show",
+                "name": "Bemutató"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "services": {
+      "items": {
+        "description": {
+          "ui:title": "Szolgáltatás",
+          "ui:options": {
+            "discriminatorTitle": "Szolgáltatás típusa",
+            "discriminatorMap": [
+              {
+                "value": "accomodation",
+                "name": "Szállás"
+              },
+              {
+                "value": "wellnes",
+                "name": "Pihentető szolgáltatás (Wellnes)"
+              },
+              {
+                "value": "horseriding",
+                "name": "Lovaglás"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
