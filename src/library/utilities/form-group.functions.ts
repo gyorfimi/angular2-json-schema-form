@@ -369,6 +369,7 @@ export class BasicSchemaPreprocessor {
       if (enumList) {
         result[prop]["enum"] = enumList;
       }
+      result[prop]["type"] = "string";
       return result;
     }, {});
 

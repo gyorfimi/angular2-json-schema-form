@@ -403,6 +403,9 @@ export function buildLayoutFromSchema(
       if (newNode.options.discriminatorMap && !newNode.discriminator.options.titleMap) {
         newNode.discriminator.options.titleMap = newNode.options.discriminatorMap;
       }
+      if (newNode.options.discriminatorTitle) {
+        newNode.discriminator.options.title = newNode.options.discriminatorTitle;
+      }
       newNode.groups = {};
       discriminatorProperty.discriminatorValues.forEach((discriminatorValue) => {
           newNode.groups[discriminatorValue] = buildLayoutFromSchema(jsf, widgetLibrary,

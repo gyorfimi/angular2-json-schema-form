@@ -5,6 +5,7 @@
         "title": "Szolgáltatás",
         "ui:widget": {
           "options": {
+            "discriminatorTitle": "Szolgáltatás típusa",
             "discriminatorMap": [
               {
                 "value": "accomodation",
@@ -50,8 +51,6 @@
         "type": "object",
         "properties": {
           "serviceType": {
-            "title": "Szolgáltatás típusa",
-            "type": "string",
             "enum": [
               "accomodation"
             ]
@@ -68,8 +67,6 @@
         "type": "object",
         "properties": {
           "serviceType": {
-            "title": "Szolgáltatás típusa",
-            "type": "string",
             "enum": [
               "wellnes"
             ]
@@ -86,8 +83,6 @@
         "type": "object",
         "properties": {
           "serviceType": {
-            "title": "Szolgáltatás típusa",
-            "type": "string",
             "enum": [
               "horseriding"
             ]
