@@ -27,7 +27,7 @@ import { buildFormGroup, buildTitleMap, JsonPointer } from '../library/utilities
             [class]="options?.fieldHtmlClass"
             [disabled]="controlDisabled"
             [id]="'control' + layoutNode?._id + '/' + checkboxItem.value"
-            [name]="formControlName"
+            [name]="controlName"
             [readonly]="options?.readonly ? 'readonly' : null"
             [value]="checkboxItem.value"
             (change)="updateValue($event)">
@@ -65,6 +65,7 @@ export class CheckboxesComponent implements OnInit {
   public formControl: AbstractControl;
   public controlName: string;
   public controlValue: any;
+  public controlDisabled: boolean = false;
   public boundControl: boolean = false;
   public options: any;
   public layoutOrientation: string;
