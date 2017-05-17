@@ -38,7 +38,7 @@
     "watchassets": "onchange 'src/**/*.css' 'src/**/*.html' 'src/**/*.json' -e 'dist/*' -v -- npm run syncassets",
     "compile:tsc": "npm run clean:dist && npm run tsc && npm run syncassets",
     "compile:ngc": "npm run clean:dist && npm run ngc && npm run syncassets",
-    "prepublish": "npm run compile:tsc",
+    "prepublish": "npm run compile:ngc",
     "start:ngc": "npm run compile:ngc && concurrently \"npm run ngc -w\" \"lite-server\" \"npm run watchassets\"",
     "start": "npm run compile:tsc && concurrently \"npm run tsc -w\" \"lite-server\" \"npm run watchassets\""
   },

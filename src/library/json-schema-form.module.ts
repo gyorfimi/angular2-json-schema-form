@@ -28,6 +28,7 @@ const ALL_COMPONENTS = [
   ...ALL_FRAMEWORKS, ...ALL_WIDGETS, ...ALL_MATERIAL_DESIGN_WIDGETS,
 ];
 
+
 @NgModule({
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule, MaterialModule,

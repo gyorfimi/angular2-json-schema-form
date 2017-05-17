@@ -89,7 +89,7 @@ export class FrameworkLibraryService {
       ],
       scripts: [
         // '//code.jquery.com/jquery-2.1.1.min.js',
-        '//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js',
+        '//ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js',
         // '//code.jquery.com/ui/1.12.1/jquery-ui.min.js',
         '//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
         '//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js',
